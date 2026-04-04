@@ -1,6 +1,15 @@
 # JobApply Copilot
 
-JobApply Copilot is a local-first job application workflow toolkit built for ethical, user-controlled assistance. It combines a Chrome extension, a FastAPI backend, and a Next.js web app to help analyze roles, tailor application materials from factual profile data, and support manual submission workflows without automating around platform safeguards.
+JobApply Copilot is an AI-assisted job application workflow system designed around a simple principle: help candidates move faster without hiding how the work is done or crossing platform boundaries. It combines a Chrome extension, a FastAPI backend, and a Next.js workspace to analyze job postings, tailor resumes and cover letters from factual profile data, draft outreach, and track application progress while keeping the final submission fully user-controlled.
+
+This project stands out by treating compliance as a product feature rather than an afterthought. Instead of auto-submitting applications or bypassing guardrails, it keeps approval checkpoints, blocks unsupported claims, and uses local-first configuration so personal profile data and generated packets stay under the user's control.
+
+## Why It Stands Out
+
+- Multi-surface product design: a Chrome extension for in-page analysis, a FastAPI service for tailoring and export, and a Next.js app for public jobs discovery plus a private workflow dashboard.
+- Ethical AI workflow: no CAPTCHA bypass, no hidden submission automation, and explicit user approval before final document generation or prefill actions.
+- Portfolio-ready technical depth: structured parsing, compliance checks, document generation, outreach drafting, and job-tracker flows in one end-to-end system.
+- Local-first user data model: personal configuration, generated outputs, and local state stay on the user's machine by default.
 
 ## Highlights
 
