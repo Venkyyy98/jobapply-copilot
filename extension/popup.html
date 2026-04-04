@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JobApply Copilot</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="container">
+      <section class="hero card">
+        <h1>JobApply Copilot</h1>
+        <p class="hero-subtitle">Analyze jobs, tailor docs, and prefill forms with better control.</p>
+        <div class="row">
+          <button id="analyzeCurrentBtn">Analyze now (auto)</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <label>Job title</label>
+        <input id="jobTitle" placeholder="Detected or edit manually" />
+
+        <label>Company</label>
+        <input id="companyHint" placeholder="Detected or edit manually" />
+
+        <label>Job description</label>
+        <textarea id="jobText" rows="8" placeholder="Auto-filled from page. You can paste manually."></textarea>
+
+        <div class="row">
+          <button id="analyzeBtn">Analyze from edited text</button>
+          <span id="spinner" class="hidden">Analyzing...</span>
+        </div>
+      </section>
+
+      <section id="results" class="hidden card">
+        <h2>Analysis</h2>
+        <p id="summary"></p>
+        <p><strong>Fit score:</strong> <span id="fitScore"></span></p>
+        <p><strong>Reasons:</strong></p>
+        <ul id="fitReasons"></ul>
+        <p><strong>Suggested bullet IDs:</strong> <span id="bulletIds"></span></p>
+        <p><strong>Keyword coverage:</strong> <span id="keywordCoverage"></span></p>
+        <p><strong>Matched keywords:</strong> <span id="matchedKeywords"></span></p>
+        <p><strong>Missing keywords:</strong> <span id="missingKeywords"></span></p>
+        <p><strong>Compliance notes:</strong></p>
+        <ul id="complianceNotes"></ul>
+      </section>
+      <section class="row actions">
+        <button id="checkIssueBtn">Check issue & reach out</button>
+      </section>
+      <section id="issueCard" class="hidden card">
+        <h2>Company Issue</h2>
+        <p><strong>Issue brief:</strong> <span id="issueSummary"></span></p>
+        <p><strong>How you can help:</strong> <span id="issueHowHelp"></span></p>
+        <p><strong>LinkedIn outreach note:</strong> <span id="linkedinIssueBrief"></span></p>
+        <p><strong>Issue sources:</strong></p>
+        <ul id="issueSources"></ul>
+      </section>
+
+      <section class="row actions">
+        <button id="generateBtn" disabled>Generate tailored resume + cover letter</button>
+        <button id="boostBtn" disabled>Boost coverage & regenerate</button>
+      </section>
+      <section class="row actions">
+        <button id="markAppliedBtn" disabled>Mark this as applied</button>
+        <button id="exportAppliedBtn">Export applied jobs CSV</button>
+      </section>
+
+      <section id="referralCard" class="card">
+        <h2>Referral Outreach</h2>
+        <label>Contacts (one per line): Name | Title | LinkedIn URL | Email</label>
+        <textarea
+          id="referralContacts"
+          rows="4"
+          placeholder="Jane Doe | Senior Data Analyst | https://www.linkedin.com/in/janedoe | jane@company.com"
+        ></textarea>
+        <div class="row actions">
+          <button id="findTargetsBtn">Find targets from job/company (API)</button>
+        </div>
+        <label>Select one contact</label>
+        <select id="referralContactSelect">
+          <option value="">Select a contact...</option>
+        </select>
+
+        <h2>LinkedIn</h2>
+        <div class="row actions">
+          <button id="generateReferralBtn">Generate LinkedIn note (selected)</button>
+          <button id="openProfilesBtn">Open selected LinkedIn profile</button>
+        </div>
+
+        <div id="referralDrafts" class="hidden"></div>
+
+        <h2>Email</h2>
+        <div class="row actions">
+          <button id="openEmailDraftsBtn">Generate email draft (selected)</button>
+        </div>
+        <label>Generated email draft</label>
+        <textarea id="referralOutput" rows="6" placeholder="Generated email draft will appear here."></textarea>
+      </section>
+
+      <section class="row actions">
+        <button id="prefillBtn">Auto-fill form fields</button>
+      </section>
+
+      <section class="card toggle-card">
+        <label><input type="checkbox" id="aiFieldMode" checked /> AI field-mapped mode</label>
+      </section>
+
+      <section id="downloads" class="hidden card">
+        <h2>Documents</h2>
+        <button id="downloadDocxPairBtn">Download Resume + Cover Letter (DOCX)</button>
+        <button id="downloadPdfPairBtn">Download Resume + Cover Letter (PDF)</button>
+        <button id="downloadAllBtn">Save Resume + Cover Letter to Documents</button>
+        <button id="uploadResumeBtn">Upload Resume on Form</button>
+        <button id="uploadCoverBtn">Upload Cover Letter on Form</button>
+      </section>
+
+      <section id="history" class="card">
+        <h2>Recent Jobs</h2>
+        <ul id="historyList"></ul>
+      </section>
+
+      <p id="status" class="status"></p>
+      <p class="footnote">Compliance: no CAPTCHA bypass, no auto-submit, no fabricated claims.</p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

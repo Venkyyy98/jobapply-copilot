@@ -1,0 +1,13 @@
+work_authorization: "Add your actual status"
+sponsorship_required: "unknown"
+preferred_locations:
+  - "Remote"
+salary_expectations:
+  currency: "USD"
+  min: null
+  max: null
+manual_packet_mode_default: true
+restricted_platforms:
+  - "Workday"
+  - "Taleo"
+  - "iCIMS"

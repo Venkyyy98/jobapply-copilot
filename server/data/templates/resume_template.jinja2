@@ -1,0 +1,38 @@
+{{ candidate.identity.full_name }}
+{{ candidate.identity.location }} | {{ candidate.identity.phone }} | {{ candidate.identity.email }}{% if candidate.links.linkedin %} | LinkedIn:{{ candidate.links.linkedin }}{% endif %}{% if candidate.links.github %} | Github:{{ candidate.links.github }}{% endif %}{% if candidate.links.portfolio %} | Portfolio:{{ candidate.links.portfolio }}{% endif %}
+
+PROFESSIONAL SUMMARY
+{{ candidate.summary }}
+
+PROFESSIONAL EXPERIENCE
+{% for exp in candidate.experience %}
+{{ exp.company }} | {{ exp.start_date_fmt }} - {{ exp.end_date_fmt }}
+{{ exp.role }}
+{% for bullet in exp.bullets %}- {{ bullet.text }}
+{% endfor %}
+{% endfor %}
+
+EDUCATION
+{% for edu in candidate.education %}{{ edu.school }}{% if edu.start_date_fmt or edu.end_date_fmt %} | {{ edu.start_date_fmt or "" }} - {{ edu.end_date_fmt or "" }}{% endif %}
+{{ edu.degree }}{% if edu.field %}, {{ edu.field }}{% endif %}{% if edu.gpa %} | CGPA - {{ edu.gpa }}{% endif %}{% if edu.location %} | {{ edu.location }}{% endif %}
+{% endfor %}
+
+{% if candidate.academic_projects %}
+ACADEMIC PROJECTS
+{% for project in candidate.academic_projects %}
+{{ project.name }}{% if project.url %} ({% if project.link_label %}{{ project.link_label }}{% else %}GitHub{% endif %}:{{ project.url }}){% elif project.link_label %} ({{ project.link_label }}){% endif %}
+{% if project.bullets %}
+{% for bullet in project.bullets %}- {{ bullet }}
+{% endfor %}
+{% else %}
+- {{ project.description }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if candidate.technical_skills %}
+TECHNICAL SKILLS
+{% for group in candidate.technical_skills %}
+{{ group["category"] }}: {{ group["items"] | join(", ") }}
+{% endfor %}
+{% endif %}

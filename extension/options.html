@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JobApply Copilot - Options</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>JobApply Copilot Settings</h1>
+
+      <section class="card">
+        <h2>Local Service Auth</h2>
+        <label>Shared token (X-JAC-TOKEN)</label>
+        <input id="jacToken" type="password" placeholder="Match JAC_TOKEN in server env" />
+      </section>
+
+      <section class="card">
+        <h2>Prefill Profile</h2>
+        <label>Full name</label><input id="fullName" />
+        <label>First name</label><input id="firstName" />
+        <label>Last name</label><input id="lastName" />
+        <label>Email</label><input id="email" />
+        <label>Phone</label><input id="phone" />
+        <label>LinkedIn</label><input id="linkedin" />
+        <label>GitHub</label><input id="github" />
+        <label>Portfolio</label><input id="portfolio" />
+        <label>Location</label><input id="location" />
+        <label>State</label><input id="state" placeholder="e.g., New Jersey or NJ" />
+        <label>Work authorization</label><input id="workAuthorization" />
+        <label>Sponsorship</label><input id="sponsorship" />
+        <label>Salary within range (Yes/No)</label><input id="salaryInRange" />
+        <label>18 or older (Yes/No)</label><input id="age18Plus" placeholder="Yes" />
+        <label>Employment restriction agreement (Yes/No)</label><input id="employmentRestriction" placeholder="No" />
+        <label>Desired salary range</label><input id="desiredSalaryRange" placeholder="$90,000 - $110,000" />
+        <label>Skills (comma or newline separated)</label>
+        <textarea id="skillsList" rows="4" placeholder="Python, SQL, Tableau, Power BI"></textarea>
+      </section>
+
+      <section class="card">
+        <h2>Manual Packet Defaults</h2>
+        <label>Base resume bullet IDs (comma-separated, optional)</label>
+        <input id="baseResumeBulletIds" placeholder="exp_1_b1,exp_1_b2" />
+      </section>
+
+      <section class="card">
+        <h2>Custom Q&A Mapping</h2>
+        <label>One mapping per line: Question text => Answer</label>
+        <textarea
+          id="customQa"
+          rows="8"
+          placeholder="Are you authorized to work in the US? => Yes&#10;Do you require sponsorship for a work visa? => No"
+        ></textarea>
+      </section>
+
+      <section class="card">
+        <h2>Dropdown Key-Value Mapping</h2>
+        <label>One mapping per line: Dropdown label/question key => Option to select</label>
+        <textarea
+          id="dropdownMap"
+          rows="8"
+          placeholder="are you 18 years or older => Yes&#10;require sponsorship => No&#10;state => New Jersey"
+        ></textarea>
+      </section>
+
+      <section class="card">
+        <h2>Question Bank</h2>
+        <label>One mapping per line: Question text => Final approved answer</label>
+        <textarea
+          id="questionBank"
+          rows="8"
+          placeholder="Are you legally eligible to work in the country to which you are applying? => Yes&#10;Do you now or will you in the future require sponsorship for a work visa? => No"
+        ></textarea>
+      </section>
+
+      <button id="saveBtn">Save Settings</button>
+      <p id="status"></p>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>

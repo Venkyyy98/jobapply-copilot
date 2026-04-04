@@ -1,0 +1,252 @@
+:root {
+  --bg-start: #0e1829;
+  --bg-end: #172a46;
+  --glass: rgba(255, 255, 255, 0.88);
+  --glass-strong: rgba(255, 255, 255, 0.94);
+  --ink: #0f1d33;
+  --ink-muted: #4a5e7e;
+  --primary: #0ea5e9;
+  --primary-strong: #0284c7;
+  --secondary: #f0f7ff;
+  --border: rgba(14, 49, 99, 0.16);
+  --danger: #b42318;
+  --ok: #0f4b8a;
+  --shadow: 0 20px 44px rgba(7, 19, 43, 0.24);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 390px;
+  background:
+    radial-gradient(120% 60% at 8% 2%, rgba(14, 165, 233, 0.28), transparent 60%),
+    radial-gradient(80% 60% at 94% 10%, rgba(34, 197, 94, 0.2), transparent 65%),
+    linear-gradient(148deg, var(--bg-start), var(--bg-end));
+  color: var(--ink);
+  font-family: "Avenir Next", "IBM Plex Sans", "SF Pro Text", "Segoe UI", sans-serif;
+}
+
+.container {
+  padding: 14px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+
+h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: #17325a;
+}
+
+.hero {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.95), rgba(235, 246, 255, 0.92));
+}
+
+.hero-subtitle {
+  margin: 6px 0 10px;
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+label {
+  display: block;
+  margin: 9px 0 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #264772;
+}
+
+input,
+textarea,
+select,
+button {
+  width: 100%;
+  border-radius: 12px;
+}
+
+input,
+textarea,
+select {
+  border: 1px solid var(--border);
+  padding: 10px 11px;
+  background: #fff;
+  font: inherit;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: rgba(14, 165, 233, 0.8);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+}
+
+button {
+  border: 0;
+  padding: 11px;
+  background: linear-gradient(142deg, var(--primary), var(--primary-strong));
+  color: #fff;
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(2, 132, 199, 0.32);
+  transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: saturate(1.1);
+  box-shadow: 0 14px 26px rgba(2, 132, 199, 0.34);
+}
+
+button:disabled {
+  opacity: 0.46;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.row {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.actions button {
+  flex: 1;
+}
+
+.actions button + button {
+  background: linear-gradient(145deg, #133967, #22558e);
+}
+
+.card {
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  background: var(--glass);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+}
+
+.toggle-card label {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-card input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+ul {
+  margin: 7px 0;
+  padding-left: 18px;
+}
+
+li {
+  margin: 2px 0;
+}
+
+a {
+  display: inline-block;
+  margin: 6px 0;
+  color: #0f4b8a;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+#historyList {
+  max-height: 170px;
+  overflow: auto;
+}
+
+#historyList li {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 8px 10px;
+  border: 1px solid rgba(20, 64, 122, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+#referralDrafts {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.referral-item {
+  border: 1px solid rgba(20, 64, 122, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 8px 10px;
+}
+
+.referral-item p {
+  margin: 4px 0;
+  font-size: 12px;
+}
+
+.referral-item .mini-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.referral-item .mini-actions button {
+  padding: 7px 8px;
+  font-size: 11px;
+}
+
+.status {
+  min-height: 20px;
+  margin: 10px 2px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ok);
+}
+
+.hidden {
+  display: none;
+}
+
+.footnote {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #d9e8ff;
+}
+
+#spinner {
+  font-size: 12px;
+  color: #164f8f;
+  font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
