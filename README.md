@@ -8,13 +8,15 @@ This project stands out by treating compliance as a product feature rather than 
 
 - Multi-surface product design: a Chrome extension for in-page analysis, a FastAPI service for tailoring and export, and a Next.js app for public jobs discovery plus a private workflow dashboard.
 - Ethical AI workflow: no CAPTCHA bypass, no hidden submission automation, and explicit user approval before final document generation or prefill actions.
-- Portfolio-ready technical depth: structured parsing, compliance checks, document generation, outreach drafting, and job-tracker flows in one end-to-end system.
+- Portfolio-ready technical depth: structured parsing, compliance checks, document generation, referral target discovery, outreach drafting, and job-tracker flows in one end-to-end system.
 - Local-first user data model: personal configuration, generated outputs, and local state stay on the user's machine by default.
 
 ## Highlights
 
 - Chrome extension (Manifest V3) for in-page job extraction, review, and safe prefill assistance.
 - Local FastAPI service for job parsing, fit scoring, compliance checks, resume tailoring, cover-letter generation, and PDF export.
+- Referral outreach workflow that can identify likely recruiter or employee contacts, enrich with LinkedIn/email data, and generate personalized outreach drafts.
+- Applied-job tracking with exportable CSV output for keeping a portable record of submitted applications.
 - Next.js web app for a public-safe jobs feed plus a private Google-authenticated workspace.
 - Local-first configuration so user profile data, generated packets, and local state stay under user control.
 
@@ -158,9 +160,11 @@ The web app has two surfaces:
 5. Review fit score, reasons, and compliance notes.
 6. Click **Generate tailored resume + cover letter** and confirm approval.
 7. Download generated PDFs.
-8. Click **Approve & enable prefill**.
-9. Open application form and click **Prefill form fields**.
-10. Review every field manually and submit yourself.
+8. Find likely referral targets and generate outreach drafts for LinkedIn or email.
+9. Click **Approve & enable prefill**.
+10. Open application form and click **Prefill form fields**.
+11. Review every field manually and submit yourself.
+12. Mark the role as applied and export your applied-jobs CSV when needed.
 
 ## Web App Flow
 
@@ -190,10 +194,21 @@ All endpoints require header `X-JAC-TOKEN`.
 - `POST /company_issue`
   - body: `{job_id}`
   - returns on-demand issue brief and source links for outreach.
+- `POST /find_targets`
+  - body: `{job_id}`
+  - returns likely recruiter or employee contacts with LinkedIn URLs, emails when available, and evidence snippets.
+- `POST /referral_drafts`
+  - body: `{job_id, contacts: [...]}`
+  - returns LinkedIn and email outreach drafts for selected contacts.
 - `GET /download/{job_id}/{doc_type}`
   - `doc_type`: `resume_pdf`, `cover_letter_pdf`
 - `GET /jobs`
   - returns last 20 jobs and statuses
+- `POST /mark_applied`
+  - body: `{job_id, notes}`
+  - marks a role as applied in the local workflow.
+- `GET /export/applied.csv`
+  - downloads a CSV of applied jobs from the local tracker.
 - `POST /sync_job`
   - syncs a role into the canonical public-safe jobs feed
 - `GET /web/jobs`
