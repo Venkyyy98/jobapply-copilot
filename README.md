@@ -73,12 +73,13 @@ The example files are safe to commit. The personal `.env`, database, generated o
 
 ```bash
 cd server
-pip install -e .
+pip install -e ".[dev]"
 ```
 
 3. Copy env file and configure secrets:
 
 ```bash
+cd ..
 cp .env.example .env
 ```
 
@@ -134,7 +135,7 @@ The web app has two surfaces:
 1. Open `chrome://extensions`.
 2. Enable Developer mode.
 3. Click **Load unpacked**.
-4. Select `/Users/venkateshmudaliar/Documents/New project/jobapply-copilot/extension`.
+4. Select the repository's `extension/` folder.
 5. Open extension **Options** page and set:
 - `X-JAC-TOKEN` (must match server `JAC_TOKEN`)
 - Your prefill profile values.
