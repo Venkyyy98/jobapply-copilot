@@ -30,6 +30,9 @@ export type PublicJobFeedItem = {
   keyword_coverage_pct: number;
   compliance_ready: boolean;
   compliance_notes: string[];
+  ai_assisted?: boolean;
+  ai_key_source?: "none" | "byok" | "server";
+  generation_warnings?: string[];
   aggregate_counts: AggregateCounts;
   created_at: string;
   updated_at: string;
@@ -45,11 +48,19 @@ export type PrivateJobFeedItem = PublicJobFeedItem & {
   user_action: string;
   user_action_metadata: Record<string, unknown>;
   action_updated_at: string;
+  action_dates: Record<string, string>;
+};
+
+export type ApplicationActivity = {
+  periods: Record<"today" | "week" | "month" | "all", { checked: number; applied: number }>;
+  filtered: { checked: number; applied: number };
+  daily: Array<{ date: string; checked: number; applied: number }>;
 };
 
 export type UserJobListResponse = {
   items: PrivateJobFeedItem[];
   total: number;
+  activity: ApplicationActivity;
 };
 
 export type UserStatsResponse = {
@@ -65,4 +76,44 @@ export type UserStatsResponse = {
     action_type: string;
     updated_at: string;
   }>;
+  application_activity: ApplicationActivity;
+};
+
+export type UserProfileResponse = {
+  candidate_profile: Record<string, unknown>;
+  preferences: Record<string, unknown>;
+  profile_complete: boolean;
+  compliance_notes: string[];
+  updated_at: string;
+};
+
+export type ExtensionTokenResponse = {
+  token: string;
+  api_base_url: string;
+  created_at: string;
+};
+
+export type TargetContact = {
+  name: string;
+  title: string;
+  linkedin_url: string;
+  email: string;
+  source: string;
+  score: number;
+  evidence: string[];
+  relationship_type: "previous_company" | "school" | "beyond_network";
+  shared_context: string;
+};
+
+export type ReferralDraft = {
+  contact_name: string;
+  contact_title: string;
+  linkedin_url: string;
+  email: string;
+  relationship_type: "previous_company" | "school" | "beyond_network";
+  shared_context: string;
+  linkedin_note: string;
+  linkedin_followup: string;
+  email_subject: string;
+  email_body: string;
 };

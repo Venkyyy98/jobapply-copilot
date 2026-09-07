@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: jobapply-copilot-api
+    env: docker
+    rootDir: server
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: JAC_TOKEN
+        generateValue: true
+      - key: JAC_CORS_ORIGINS
+        sync: false
+      - key: NEXT_PUBLIC_API_BASE_URL
+        sync: false
+      - key: JAC_ANALYZE_DAILY_QUOTA
+        value: 25
+      - key: JAC_DOCS_DAILY_QUOTA
+        value: 10
+      - key: JAC_OUTREACH_DAILY_QUOTA
+        value: 20

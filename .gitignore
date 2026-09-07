@@ -13,10 +13,20 @@ __pycache__/
 
 node_modules/
 .next/
+*.tsbuildinfo
 
 jobapply.db
 *.db
 outputs/
+output/
+tmp/
+dist/
+downloads/
+*.pdf
+*.docx
+*.xlsx
+*.csv
+daily_job_hunt/
 
 server/data/candidate_profile.yaml
 server/data/preferences.yaml

@@ -25,16 +25,18 @@ class JobActionType(str, Enum):
 
 
 class AnalyzeJobRequest(BaseModel):
-    url: str = ""
-    job_text: str = Field(min_length=50)
-    page_title: str = ""
-    company_hint: str = ""
+    url: str = Field(default="", max_length=2048)
+    job_text: str = Field(min_length=50, max_length=120_000)
+    page_title: str = Field(default="", max_length=500)
+    title_hint: str = Field(default="", max_length=300)
+    company_hint: str = Field(default="", max_length=300)
 
 
 class AnalyzeJobResponse(BaseModel):
     job_id: int
     title: str
     company: str
+    location: str = ""
     summary: str
     fit_score: int
     fit_reasons: list[str]
@@ -47,12 +49,26 @@ class AnalyzeJobResponse(BaseModel):
     missing_keywords: list[str] = Field(default_factory=list)
     compliance_ready: bool
     compliance_notes: list[str]
+    ai_assisted: bool = False
+    ai_key_source: str = "none"
+    generation_warnings: list[str] = Field(default_factory=list)
 
 
 class GenerateDocsRequest(BaseModel):
     job_id: int
     approve: bool = False
     boost_coverage: bool = False
+
+
+class TestApiKeyResponse(BaseModel):
+    ok: bool
+    provider: str = "openai"
+    message: str
+
+
+class DemoAnalyzeResponse(AnalyzeJobResponse):
+    demo: bool = True
+    sample_notice: str = "Sample demo output only. No personal data or real API key was used."
 
 
 class GenerateDocsResponse(BaseModel):
@@ -66,6 +82,9 @@ class GenerateDocsResponse(BaseModel):
     keyword_coverage_pct: int = 0
     matched_keywords: list[str] = Field(default_factory=list)
     missing_keywords: list[str] = Field(default_factory=list)
+    ai_assisted: bool = False
+    ai_key_source: str = "none"
+    generation_warnings: list[str] = Field(default_factory=list)
 
 
 class CompanyIssueRequest(BaseModel):
@@ -79,10 +98,12 @@ class CompanyIssueResponse(BaseModel):
 
 
 class ReferralContact(BaseModel):
-    name: str = ""
-    title: str = ""
-    linkedin_url: str = ""
-    email: str = ""
+    name: str = Field(default="", max_length=160)
+    title: str = Field(default="", max_length=220)
+    linkedin_url: str = Field(default="", max_length=2048)
+    email: str = Field(default="", max_length=320)
+    relationship_type: str = Field(default="beyond_network", max_length=40)
+    shared_context: str = Field(default="", max_length=160)
 
 
 class ReferralDraftsRequest(BaseModel):
@@ -95,6 +116,8 @@ class ReferralDraft(BaseModel):
     contact_title: str = ""
     linkedin_url: str = ""
     email: str = ""
+    relationship_type: str = "beyond_network"
+    shared_context: str = ""
     linkedin_note: str
     linkedin_followup: str = ""
     email_subject: str
@@ -120,6 +143,8 @@ class TargetContact(BaseModel):
     source: str = ""
     score: float = 0.0
     evidence: list[str] = Field(default_factory=list)
+    relationship_type: str = "beyond_network"
+    shared_context: str = ""
 
 
 class FindTargetsResponse(BaseModel):
@@ -132,7 +157,7 @@ class FindTargetsResponse(BaseModel):
 
 class MarkAppliedRequest(BaseModel):
     job_id: int
-    notes: str = ""
+    notes: str = Field(default="", max_length=2000)
 
 
 class MarkAppliedResponse(BaseModel):
@@ -151,6 +176,35 @@ class SavePacketResponse(BaseModel):
     files: dict[str, str]
 
 
+class UserProfilePayload(BaseModel):
+    candidate_profile: dict[str, Any] = Field(default_factory=dict)
+    preferences: dict[str, Any] = Field(default_factory=dict)
+
+
+class UserProfileResponse(UserProfilePayload):
+    profile_complete: bool
+    compliance_notes: list[str] = Field(default_factory=list)
+    updated_at: str = ""
+
+
+class ExtensionTokenResponse(BaseModel):
+    token: str
+    api_base_url: str
+    created_at: str
+
+
+class UserDataExportResponse(BaseModel):
+    user: dict[str, str] = Field(default_factory=dict)
+    profile: UserProfileResponse | None = None
+    jobs: list[dict[str, Any]] = Field(default_factory=list)
+    actions: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class DeleteUserDataResponse(BaseModel):
+    deleted: bool
+    message: str
+
+
 class JobRecord(BaseModel):
     id: int
     url: str
@@ -166,14 +220,14 @@ class JobRecord(BaseModel):
 
 class SyncJobRequest(BaseModel):
     source_job_id: int | None = None
-    url: str = ""
-    page_title: str = ""
-    company_hint: str = ""
-    title: str = ""
-    company: str = ""
-    location: str = ""
-    summary: str = ""
-    job_text: str = ""
+    url: str = Field(default="", max_length=2048)
+    page_title: str = Field(default="", max_length=500)
+    company_hint: str = Field(default="", max_length=300)
+    title: str = Field(default="", max_length=300)
+    company: str = Field(default="", max_length=300)
+    location: str = Field(default="", max_length=300)
+    summary: str = Field(default="", max_length=2000)
+    job_text: str = Field(default="", max_length=120_000)
     fit_score: int | None = None
     fit_reasons: list[str] = Field(default_factory=list)
     tailoring_plan: list[str] = Field(default_factory=list)
@@ -184,7 +238,7 @@ class SyncJobRequest(BaseModel):
     keyword_coverage_pct: int = 0
     compliance_ready: bool = False
     compliance_notes: list[str] = Field(default_factory=list)
-    visibility: str = "public"
+    visibility: str = "private"
 
 
 class AggregateCounts(BaseModel):
@@ -250,14 +304,17 @@ class PrivateJobFeedItem(PublicJobFeedItem):
     user_action: str = ""
     user_action_metadata: dict[str, Any] = Field(default_factory=dict)
     action_updated_at: str = ""
+    action_dates: dict[str, str] = Field(default_factory=dict)
 
 
 class UserJobListResponse(BaseModel):
     items: list[PrivateJobFeedItem] = Field(default_factory=list)
     total: int = 0
+    activity: dict[str, Any] = Field(default_factory=dict)
 
 
 class UserStatsResponse(BaseModel):
     user: dict[str, str] = Field(default_factory=dict)
     counts: dict[str, int] = Field(default_factory=dict)
     recent_activity: list[dict[str, str]] = Field(default_factory=list)
+    application_activity: dict[str, Any] = Field(default_factory=dict)

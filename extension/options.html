@@ -11,9 +11,26 @@
       <h1>JobApply Copilot Settings</h1>
 
       <section class="card">
-        <h2>Local Service Auth</h2>
-        <label>Shared token (X-JAC-TOKEN)</label>
+        <h2>API Connection</h2>
+        <label>API base URL</label>
+        <input id="apiBaseUrl" placeholder="https://your-api.example.com" />
+        <label>Application tracker URL</label>
+        <input id="websiteUrl" type="url" placeholder="http://localhost:3000/app/jobs" />
+        <label>Beta extension token</label>
+        <input id="extensionToken" type="password" placeholder="Paste token from web onboarding" />
+        <label>Local shared token (development fallback)</label>
         <input id="jacToken" type="password" placeholder="Match JAC_TOKEN in server env" />
+        <label>OpenAI API key for AI requests</label>
+        <input id="openaiApiKey" type="password" placeholder="sk-... stored for this browser session by default" />
+        <label class="checkbox-row">
+          <input id="rememberOpenAiKey" type="checkbox" />
+          Remember key on this device
+        </label>
+        <p class="hint">Default is session-only storage via chrome.storage.session. Remembering stores the key in local extension storage on this device only.</p>
+        <div class="inline-actions">
+          <button id="testOpenAiKeyBtn" type="button">Test API Key</button>
+          <button id="removeOpenAiKeyBtn" type="button">Remove API Key</button>
+        </div>
       </section>
 
       <section class="card">
@@ -27,7 +44,7 @@
         <label>GitHub</label><input id="github" />
         <label>Portfolio</label><input id="portfolio" />
         <label>Location</label><input id="location" />
-        <label>State</label><input id="state" placeholder="e.g., New Jersey or NJ" />
+        <label>State</label><input id="state" placeholder="e.g., California or CA" />
         <label>Work authorization</label><input id="workAuthorization" />
         <label>Sponsorship</label><input id="sponsorship" />
         <label>Salary within range (Yes/No)</label><input id="salaryInRange" />
@@ -60,7 +77,7 @@
         <textarea
           id="dropdownMap"
           rows="8"
-          placeholder="are you 18 years or older => Yes&#10;require sponsorship => No&#10;state => New Jersey"
+          placeholder="are you 18 years or older => Yes&#10;require sponsorship => No&#10;state => California"
         ></textarea>
       </section>
 
@@ -72,6 +89,43 @@
           rows="8"
           placeholder="Are you legally eligible to work in the country to which you are applying? => Yes&#10;Do you now or will you in the future require sponsorship for a work visa? => No"
         ></textarea>
+      </section>
+
+      <section class="card">
+        <h2>EEO &amp; Demographics</h2>
+        <p class="hint">Used to fill voluntary self-identification fields. All answers are stored locally only.</p>
+        <label>Preferred name</label><input id="preferredName" placeholder="Venkatesh Mudaliar" />
+        <label>Gender</label><input id="gender" placeholder="Male" />
+        <label>Pronouns</label><input id="pronouns" placeholder="He/Him" />
+        <label>Hispanic or Latino (Yes/No)</label><input id="hispanicOrLatino" placeholder="No" />
+        <label>Race / Ethnicity</label><input id="raceEthnicity" placeholder="Asian" />
+        <label>Veteran status</label><input id="veteranStatus" placeholder="I am not a protected veteran" />
+        <label>Disability status</label><input id="disabilityStatus" placeholder="No, I don't have a disability" />
+      </section>
+
+      <section class="card">
+        <h2>Education</h2>
+        <p class="hint">JSON array — one object per degree, most recent first. Edit fields then Save.</p>
+        <textarea id="educationJson" rows="10"></textarea>
+      </section>
+
+      <section class="card">
+        <h2>Work Experience</h2>
+        <p class="hint">JSON array — most recent job first. Used to autofill employer, title, dates, and description fields.</p>
+        <textarea id="workExperiencesJson" rows="18"></textarea>
+      </section>
+
+      <section class="card">
+        <h2>Address by Region</h2>
+        <p class="hint">Extension picks CA address for west-coast job pages, NJ/NY address otherwise.</p>
+        <label>Street address (NY/NJ only if relocating)</label><input id="addressLine1NjNy" placeholder="Leave blank unless specifically needed" />
+        <label>City (NY/NJ only if relocating)</label><input id="cityNjNy" placeholder="Leave blank unless specifically needed" />
+        <label>State (NJ/NY)</label><input id="stateNjNy" placeholder="NJ" />
+        <label>ZIP (NJ/NY)</label><input id="zipNjNy" placeholder="07307" />
+        <label>Street address (CA)</label><input id="addressLine1Ca" placeholder="1883 Mount Conness Way" />
+        <label>City (CA)</label><input id="cityCa" placeholder="Antioch" />
+        <label>State (CA)</label><input id="stateCa" placeholder="CA" />
+        <label>ZIP (CA)</label><input id="zipCa" placeholder="94531" />
       </section>
 
       <button id="saveBtn">Save Settings</button>

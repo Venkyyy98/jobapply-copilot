@@ -21,6 +21,8 @@ class Target:
     source: str = ""
     score: float = 0.0
     evidence: list[str] = field(default_factory=list)
+    relationship_type: str = "beyond_network"
+    shared_context: str = ""
 
 
 def _http_get_json(url: str, timeout: float = 12.0) -> dict[str, Any]:
@@ -75,14 +77,98 @@ def _score_contact(candidate: Target, role: str) -> float:
         role_overlap = len(role_tokens.intersection(candidate_tokens))
         score += min(20, role_overlap * 3)
 
-    if "accenture" in text:
-        score += 12
-    if any(x in text for x in ["ltimindtree", "ltim", "larsen", "l&t infotech", "lti"]):
-        score += 12
-    if any(x in text for x in ["stevens institute", "stevens"]):
-        score += 12
+    if candidate.relationship_type == "previous_company":
+        score += 20
+    elif candidate.relationship_type == "school":
+        score += 18
 
     return round(score, 2)
+
+
+def _organization_aliases(name: str) -> list[str]:
+    display = _normalize(name)
+    lower = display.lower()
+    aliases = {lower}
+    if "ltimindtree" in lower or "larsen" in lower or re.search(r"\blti\b", lower):
+        aliases.update(
+            {
+                "ltimindtree",
+                "lti mindtree",
+                "larsen & toubro infotech",
+                "larsen and toubro infotech",
+                "l&t infotech",
+                "lti",
+            }
+        )
+    if "stevens institute" in lower:
+        aliases.add("stevens institute")
+    return sorted((alias for alias in aliases if len(alias) >= 3), key=len, reverse=True)
+
+
+def _background_organizations(candidate_profile: dict[str, Any] | None) -> tuple[list[tuple[str, list[str]]], list[tuple[str, list[str]]]]:
+    profile = candidate_profile or {}
+    companies: list[tuple[str, list[str]]] = []
+    schools: list[tuple[str, list[str]]] = []
+    seen_companies: set[str] = set()
+    seen_schools: set[str] = set()
+
+    for item in profile.get("experience", []) or []:
+        company = _normalize(str(item.get("company", ""))) if isinstance(item, dict) else ""
+        key = re.sub(r"[^a-z0-9]", "", company.lower())
+        if company and key not in seen_companies:
+            seen_companies.add(key)
+            companies.append((company, _organization_aliases(company)))
+
+    for item in profile.get("education", []) or []:
+        school = _normalize(str(item.get("school", ""))) if isinstance(item, dict) else ""
+        key = re.sub(r"[^a-z0-9]", "", school.lower())
+        if school and key not in seen_schools:
+            seen_schools.add(key)
+            schools.append((school, _organization_aliases(school)))
+
+    # A university can also appear as an employer for an RA role. Treat that
+    # overlap as an alumni connection, which is the more useful outreach label.
+    companies = [
+        (display, aliases)
+        for display, aliases in companies
+        if re.sub(r"[^a-z0-9]", "", display.lower()) not in seen_schools
+    ]
+    return companies, schools
+
+
+def _contains_alias(text: str, alias: str) -> bool:
+    if alias == "lti":
+        return bool(re.search(r"\blti\b", text))
+    return alias in text
+
+
+def classify_shared_background(target: Target, candidate_profile: dict[str, Any] | None) -> Target:
+    text = _normalize(f"{target.title} {' '.join(target.evidence)}").lower()
+    companies, schools = _background_organizations(candidate_profile)
+    for display, aliases in companies:
+        if any(_contains_alias(text, alias) for alias in aliases):
+            target.relationship_type = "previous_company"
+            target.shared_context = display
+            return target
+    for display, aliases in schools:
+        if any(_contains_alias(text, alias) for alias in aliases):
+            target.relationship_type = "school"
+            target.shared_context = display
+            return target
+    target.relationship_type = "beyond_network"
+    target.shared_context = ""
+    return target
+
+
+def _quoted_background_query(items: list[tuple[str, list[str]]], limit: int = 5) -> str:
+    terms: list[str] = []
+    for display, aliases in items:
+        preferred = next((alias for alias in aliases if alias != "lti"), display)
+        if preferred and preferred not in terms:
+            terms.append(preferred)
+        if len(terms) >= limit:
+            break
+    return " OR ".join(f'"{term}"' for term in terms)
 
 
 def _serp_search(api_key: str, q: str, num: int = 10) -> list[dict[str, Any]]:
@@ -154,18 +240,25 @@ def find_target_contacts(
     company: str,
     role: str,
     job_url: str,
+    candidate_profile: dict[str, Any] | None = None,
     limit: int = 10,
 ) -> tuple[list[Target], list[str]]:
     warnings: list[str] = []
     if not serpapi_key:
         return [], ["SERPAPI_KEY is missing on server. Add it in .env and restart server."]
 
+    companies, schools = _background_organizations(candidate_profile)
     queries = [
         f'site:linkedin.com/in "{company}" recruiter',
         f'site:linkedin.com/in "{company}" "hiring manager" "{role}"',
         f'site:linkedin.com/in "{company}" ("data lead" OR "data manager" OR "team lead")',
-        f'site:linkedin.com/in "{company}" ("Accenture" OR "LTIMindtree" OR "LTI" OR "Stevens Institute")',
     ]
+    company_terms = _quoted_background_query(companies)
+    school_terms = _quoted_background_query(schools)
+    if company_terms:
+        queries.append(f'site:linkedin.com/in "{company}" ({company_terms})')
+    if school_terms:
+        queries.append(f'site:linkedin.com/in "{company}" ({school_terms})')
 
     by_url: dict[str, Target] = {}
     for q in queries:
@@ -198,6 +291,7 @@ def find_target_contacts(
         return [], ["No LinkedIn targets found from public search. Try company name/job title variations."]
 
     for c in contacts:
+        classify_shared_background(c, candidate_profile)
         c.score = _score_contact(c, role)
 
     contacts.sort(key=lambda x: x.score, reverse=True)
@@ -218,4 +312,3 @@ def find_target_contacts(
         warnings.append("HUNTER_API_KEY missing. Returning contacts without email enrichment.")
 
     return contacts, warnings
-

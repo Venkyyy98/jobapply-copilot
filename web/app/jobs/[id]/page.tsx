@@ -3,9 +3,23 @@ import Link from "next/link";
 import { JobActionBar } from "@/components/job-action-bar";
 import { fetchPublicJob } from "@/lib/api";
 
+function hasValidSourceUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const job = await fetchPublicJob(id);
+  const hasDetailedEvidence =
+    job.keyword_coverage_pct > 0 ||
+    job.matched_keywords.length > 0 ||
+    job.suggested_bullets.length > 0 ||
+    job.suggested_project_ids.length > 0;
 
   return (
     <>
@@ -24,19 +38,29 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           <strong>{job.fit_score ?? "--"}</strong>
         </div>
       </div>
+      <p className="small-note" style={{ marginTop: 12 }}>
+        Fit score is calculated by JobApply Copilot during analysis from parsed job requirements, matched profile skills, keyword coverage, and optional AI review. Re-analyze the posting after profile changes to refresh this score.
+      </p>
 
       <div className="detail-columns" style={{ marginTop: 20 }}>
         <section className="detail-card">
           <h2>Fit and tailoring</h2>
           <p>{job.summary || job.job_text_excerpt}</p>
           <div className="section-head">
-            <h3>Why it matches</h3>
+            <h3>{hasDetailedEvidence ? "Why it matches" : "Analysis status"}</h3>
           </div>
-          <ul className="list-card">
-            {job.fit_reasons.map((reason) => (
-              <li key={reason}>{reason}</li>
-            ))}
-          </ul>
+          {hasDetailedEvidence ? (
+            <ul className="list-card">
+              {job.fit_reasons.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+              {!job.fit_reasons.length ? <li>No fit reasons were synced for this role.</li> : null}
+            </ul>
+          ) : (
+            <p className="small-note">
+              Detailed fit evidence is not available for this saved feed item. Re-analyze the original posting with your current profile to refresh the title, company, source link, keyword coverage, and tailoring notes.
+            </p>
+          )}
           <div className="section-head">
             <h3>Tailoring plan</h3>
           </div>
@@ -103,9 +127,13 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             <Link href="/app" className="inline-link">
               Open private workspace
             </Link>
-            <a href={job.source_url} target="_blank" rel="noreferrer" className="inline-link">
-              Open posting
-            </a>
+            {hasValidSourceUrl(job.source_url) ? (
+              <a href={job.source_url} target="_blank" rel="noreferrer" className="inline-link">
+                Open posting
+              </a>
+            ) : (
+              <span className="muted">Source unavailable</span>
+            )}
           </div>
         </aside>
       </div>

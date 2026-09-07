@@ -1,128 +1,235 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JobApply Copilot</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <main class="container">
+    <main>
       <section class="hero card">
-        <h1>JobApply Copilot</h1>
-        <p class="hero-subtitle">Analyze jobs, tailor docs, and prefill forms with better control.</p>
-        <div class="row">
-          <button id="analyzeCurrentBtn">Analyze now (auto)</button>
+        <div>
+          <p class="eyebrow">Job application assistant</p>
+          <h1>JobApply Copilot</h1>
+          <p>Analyze the job first, then use only the tools you need.</p>
+        </div>
+        <div class="hero-actions">
+          <button id="analyzeCurrentBtn" type="button">Analyze current job</button>
+          <button id="openTrackerBtn" class="secondary-button" type="button">Open application tracker</button>
         </div>
       </section>
 
-      <section class="card">
-        <label>Job title</label>
-        <input id="jobTitle" placeholder="Detected or edit manually" />
+      <p id="status" class="status status-bar" aria-live="polite">Ready.</p>
 
-        <label>Company</label>
-        <input id="companyHint" placeholder="Detected or edit manually" />
+      <details class="card api-key-card">
+        <summary>
+          <span><span class="section-kicker">AI key</span><strong>Use your OpenAI key for this extension</strong></span>
+        </summary>
+        <div class="details-body">
+          <p class="helper-text">
+            The website key is separate. Paste your key here for extension analysis and document generation.
+            Default storage is this browser session only.
+          </p>
+          <label>
+            OpenAI API key
+            <input id="openaiApiKeyInline" type="password" placeholder="sk-..." />
+          </label>
+          <label class="toggle-label">
+            <input id="rememberOpenAiKeyInline" type="checkbox" />
+            Remember key on this device
+          </label>
+          <div class="button-grid">
+            <button id="saveOpenAiKeyInlineBtn" class="secondary-button" type="button">Save key for extension</button>
+            <button id="testOpenAiKeyInlineBtn" class="secondary-button" type="button">Test key</button>
+            <button id="removeOpenAiKeyInlineBtn" class="secondary-button" type="button">Remove key</button>
+          </div>
+          <p id="openAiKeyInlineStatus" class="helper-text"></p>
+        </div>
+      </details>
 
-        <label>Job description</label>
-        <textarea id="jobText" rows="8" placeholder="Auto-filled from page. You can paste manually."></textarea>
+      <section class="card workflow-card">
+        <div class="section-heading">
+          <span class="step-badge">1</span>
+          <div>
+            <p class="section-kicker">Capture</p>
+            <h2>Confirm the job details</h2>
+            <p>Correct anything the website parser missed before analysis.</p>
+          </div>
+        </div>
 
-        <div class="row">
-          <button id="analyzeBtn">Analyze from edited text</button>
-          <span id="spinner" class="hidden">Analyzing...</span>
+        <label>
+          Job title
+          <input id="jobTitle" type="text" />
+        </label>
+        <label>
+          Company
+          <input id="companyHint" type="text" />
+        </label>
+        <label>
+          Job description
+          <textarea id="jobText" rows="6"></textarea>
+        </label>
+        <button id="analyzeBtn" type="button">Analyze edited details</button>
+        <span id="spinner" class="hidden">Analyzing...</span>
+      </section>
+
+      <section id="results" class="card workflow-card hidden">
+        <div class="section-heading">
+          <span class="step-badge">2</span>
+          <div>
+            <p class="section-kicker">Review</p>
+            <h2>Job fit and requirements</h2>
+            <p>Use this summary to decide whether and how to apply.</p>
+          </div>
+        </div>
+
+        <div class="analysis-grid">
+          <div>
+            <span>Role</span>
+            <strong id="analysisRole">-</strong>
+          </div>
+          <div>
+            <span>Company</span>
+            <strong id="analysisCompany">-</strong>
+          </div>
+          <div>
+            <span>Location</span>
+            <strong id="analysisLocation">-</strong>
+          </div>
+          <div>
+            <span>Fit score</span>
+            <strong id="fitScore">-</strong>
+          </div>
+        </div>
+
+        <p id="summary" class="analysis-summary"></p>
+
+        <details class="analysis-details">
+          <summary>View matching details</summary>
+          <p><strong>Fit reasons</strong></p>
+          <ul id="fitReasons"></ul>
+          <p><strong>Suggested bullet IDs:</strong> <span id="bulletIds"></span></p>
+          <p><strong>Keyword coverage:</strong> <span id="keywordCoverage"></span></p>
+          <p><strong>Matched keywords:</strong> <span id="matchedKeywords"></span></p>
+          <p><strong>Missing keywords:</strong> <span id="missingKeywords"></span></p>
+          <p><strong>Compliance notes</strong></p>
+          <ul id="complianceNotes"></ul>
+        </details>
+      </section>
+
+      <section class="card workflow-card">
+        <div class="section-heading">
+          <span class="step-badge">3</span>
+          <div>
+            <p class="section-kicker">Documents</p>
+            <h2>Prepare tailored documents</h2>
+            <p>Optional. Skip this step when applying with an existing resume.</p>
+          </div>
+        </div>
+
+        <button id="generateBtn" type="button" disabled>Generate resume and cover letter</button>
+
+        <div id="downloads" class="document-downloads hidden">
+          <p class="ready-label">Documents ready</p>
+          <div class="download-grid">
+            <button id="downloadPdfPairBtn" type="button">Download resume + cover letter PDF</button>
+            <button id="downloadDocxPairBtn" class="secondary-button" type="button">Download resume + cover letter DOCX</button>
+          </div>
         </div>
       </section>
 
-      <section id="results" class="hidden card">
-        <h2>Analysis</h2>
-        <p id="summary"></p>
-        <p><strong>Fit score:</strong> <span id="fitScore"></span></p>
-        <p><strong>Reasons:</strong></p>
-        <ul id="fitReasons"></ul>
-        <p><strong>Suggested bullet IDs:</strong> <span id="bulletIds"></span></p>
-        <p><strong>Keyword coverage:</strong> <span id="keywordCoverage"></span></p>
-        <p><strong>Matched keywords:</strong> <span id="matchedKeywords"></span></p>
-        <p><strong>Missing keywords:</strong> <span id="missingKeywords"></span></p>
-        <p><strong>Compliance notes:</strong></p>
-        <ul id="complianceNotes"></ul>
-      </section>
-      <section class="row actions">
-        <button id="checkIssueBtn">Check issue & reach out</button>
-      </section>
-      <section id="issueCard" class="hidden card">
-        <h2>Company Issue</h2>
-        <p><strong>Issue brief:</strong> <span id="issueSummary"></span></p>
-        <p><strong>How you can help:</strong> <span id="issueHowHelp"></span></p>
-        <p><strong>LinkedIn outreach note:</strong> <span id="linkedinIssueBrief"></span></p>
-        <p><strong>Issue sources:</strong></p>
-        <ul id="issueSources"></ul>
-      </section>
-
-      <section class="row actions">
-        <button id="generateBtn" disabled>Generate tailored resume + cover letter</button>
-        <button id="boostBtn" disabled>Boost coverage & regenerate</button>
-      </section>
-      <section class="row actions">
-        <button id="markAppliedBtn" disabled>Mark this as applied</button>
-        <button id="exportAppliedBtn">Export applied jobs CSV</button>
-      </section>
-
-      <section id="referralCard" class="card">
-        <h2>Referral Outreach</h2>
-        <label>Contacts (one per line): Name | Title | LinkedIn URL | Email</label>
-        <textarea
-          id="referralContacts"
-          rows="4"
-          placeholder="Jane Doe | Senior Data Analyst | https://www.linkedin.com/in/janedoe | jane@company.com"
-        ></textarea>
-        <div class="row actions">
-          <button id="findTargetsBtn">Find targets from job/company (API)</button>
-        </div>
-        <label>Select one contact</label>
-        <select id="referralContactSelect">
-          <option value="">Select a contact...</option>
-        </select>
-
-        <h2>LinkedIn</h2>
-        <div class="row actions">
-          <button id="generateReferralBtn">Generate LinkedIn note (selected)</button>
-          <button id="openProfilesBtn">Open selected LinkedIn profile</button>
+      <section class="card workflow-card">
+        <div class="section-heading">
+          <span class="step-badge">4</span>
+          <div>
+            <p class="section-kicker">Apply</p>
+            <h2>Complete the application</h2>
+            <p>Fill the form, submit it yourself, then record the application.</p>
+          </div>
         </div>
 
-        <div id="referralDrafts" class="hidden"></div>
+        <button id="prefillBtn" type="button" disabled>Auto-fill application form</button>
+        <label class="toggle-label">
+          <input id="aiFieldMode" type="checkbox" checked />
+          Use AI field mapping for difficult forms
+        </label>
+        <p class="helper-text">Review every field before submitting. The extension never submits the form for you.</p>
 
-        <h2>Email</h2>
-        <div class="row actions">
-          <button id="openEmailDraftsBtn">Generate email draft (selected)</button>
+        <div class="completion-panel">
+          <div>
+            <strong>Finished applying?</strong>
+            <p>Works whether you generated new documents or used an existing resume.</p>
+          </div>
+          <button id="markAppliedBtn" class="success-button" type="button" disabled>Mark as applied</button>
         </div>
-        <label>Generated email draft</label>
-        <textarea id="referralOutput" rows="6" placeholder="Generated email draft will appear here."></textarea>
       </section>
 
-      <section class="row actions">
-        <button id="prefillBtn">Auto-fill form fields</button>
-      </section>
+      <details id="referralCard" class="card workflow-card collapsible-card">
+        <summary>
+          <span class="step-badge">5</span>
+          <span>
+            <span class="section-kicker">Outreach</span>
+            <strong>Research contacts and draft messages</strong>
+          </span>
+        </summary>
+        <div class="details-body">
+          <p class="helper-text">Optional tools for company research, LinkedIn outreach, and referral requests.</p>
+          <button id="checkIssueBtn" class="secondary-button" type="button" disabled>Research company context</button>
 
-      <section class="card toggle-card">
-        <label><input type="checkbox" id="aiFieldMode" checked /> AI field-mapped mode</label>
-      </section>
+          <section id="issueCard" class="subcard hidden">
+            <h3>Company context</h3>
+            <p><strong>Issue brief:</strong> <span id="issueSummary"></span></p>
+            <p><strong>How you can help:</strong> <span id="issueHowHelp"></span></p>
+            <p><strong>LinkedIn outreach note:</strong> <span id="linkedinIssueBrief"></span></p>
+            <p><strong>Sources</strong></p>
+            <ul id="issueSources"></ul>
+          </section>
 
-      <section id="downloads" class="hidden card">
-        <h2>Documents</h2>
-        <button id="downloadDocxPairBtn">Download Resume + Cover Letter (DOCX)</button>
-        <button id="downloadPdfPairBtn">Download Resume + Cover Letter (PDF)</button>
-        <button id="downloadAllBtn">Save Resume + Cover Letter to Documents</button>
-        <button id="uploadResumeBtn">Upload Resume on Form</button>
-        <button id="uploadCoverBtn">Upload Cover Letter on Form</button>
-      </section>
+          <button id="findTargetsBtn" class="secondary-button" type="button" disabled>Find possible contacts</button>
+          <section id="networkMatches" class="network-matches hidden" aria-live="polite">
+            <div id="networkMatchGroups" class="network-match-groups"></div>
+          </section>
 
-      <section id="history" class="card">
-        <h2>Recent Jobs</h2>
-        <ul id="historyList"></ul>
-      </section>
+          <label>
+            Contact
+            <select id="referralContactSelect">
+              <option value="">Choose a contact</option>
+            </select>
+          </label>
 
-      <p id="status" class="status"></p>
-      <p class="footnote">Compliance: no CAPTCHA bypass, no auto-submit, no fabricated claims.</p>
+          <div class="button-grid">
+            <button id="generateReferralBtn" class="secondary-button" type="button">Draft LinkedIn note</button>
+            <button id="openProfilesBtn" class="secondary-button" type="button">Open LinkedIn profile</button>
+            <button id="openEmailDraftsBtn" class="secondary-button" type="button">Draft referral email</button>
+          </div>
+
+          <details class="manual-contacts">
+            <summary>View or edit contact list</summary>
+            <label>
+              One per line: Name | Title | LinkedIn URL | Email
+              <textarea id="referralContacts" rows="4"></textarea>
+            </label>
+          </details>
+          <div id="referralDrafts" class="hidden"></div>
+          <label>Referral email<textarea id="referralOutput" rows="12"></textarea></label>
+        </div>
+      </details>
+
+      <details id="history" class="card collapsible-card">
+        <summary>
+          <span>
+            <span class="section-kicker">Tracker</span>
+            <strong>Recent jobs and exports</strong>
+          </span>
+        </summary>
+        <div class="details-body">
+          <ul id="historyList"></ul>
+          <button id="exportAppliedBtn" class="secondary-button" type="button">Export applied jobs CSV</button>
+        </div>
+      </details>
     </main>
+
     <script src="popup.js"></script>
   </body>
 </html>

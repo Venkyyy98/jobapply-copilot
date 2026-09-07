@@ -57,6 +57,29 @@ label {
   color: #23466f;
 }
 
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-row input {
+  width: auto;
+  margin: 0;
+}
+
+.inline-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hint {
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 input,
 textarea {
   width: 100%;

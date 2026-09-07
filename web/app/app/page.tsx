@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
+import { ApiKeyControls } from "@/components/api-key-controls";
 import { JobCard } from "@/components/job-card";
 import { StatsGrid } from "@/components/stats-grid";
 import { authOptions } from "@/lib/auth";
@@ -19,9 +20,9 @@ export default async function WorkspacePage() {
     <>
       <div className="section-head">
         <div>
-          <h1>Workspace</h1>
+          <h1>Application tracker</h1>
           <p className="muted">
-            Private dashboard for {stats.user.name || stats.user.email}. Actions here stay user-scoped even when the job feed is public.
+            Private dashboard for {stats.user.name || stats.user.email}. Extension-analyzed jobs, generated docs, outreach, and applied status stay tied to this account.
           </p>
         </div>
         <Link href="/app/jobs" className="inline-link">
@@ -29,6 +30,7 @@ export default async function WorkspacePage() {
         </Link>
       </div>
       <StatsGrid counts={stats.counts} />
+      <ApiKeyControls />
       <div className="workspace-layout" style={{ marginTop: 20 }}>
         <section className="panel">
           <h2>Recent pipeline activity</h2>
@@ -45,11 +47,12 @@ export default async function WorkspacePage() {
           </ul>
         </section>
         <aside className="panel">
-          <h2>Copilot surfaces</h2>
+          <h2>Test the core workflow</h2>
           <ul className="list-card">
-            <li>Analyze and generate final docs in the extension, then sync back into this workspace.</li>
-            <li>Track `saved`, `analyzed`, `generated_docs`, `applied`, and `outreach_started` status per role.</li>
-            <li>Use the extension for browser prefill; this web app intentionally does not submit or prefill web forms.</li>
+            <li><Link href="/app/profile" className="inline-link">Complete beta onboarding and connect the Chrome extension.</Link></li>
+            <li>Open a real job posting in Chrome and click Analyze this job in the extension.</li>
+            <li>Generate final docs only after approving the tailored packet.</li>
+            <li>Click Mark applied after you manually submit so the Applied count updates here.</li>
           </ul>
         </aside>
       </div>

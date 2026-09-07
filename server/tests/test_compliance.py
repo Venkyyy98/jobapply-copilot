@@ -8,13 +8,13 @@ def test_profile_completeness_reports_missing_fields():
     assert any("experience" in item for item in issues)
 
 
-def test_compliance_flags_unknown_years():
+def test_compliance_allows_document_dates_not_repeated_in_profile():
     profile = {
         "identity": {"full_name": "Test User", "email": "test@example.com"},
         "experience": [{"company": "Known Inc", "role": "Engineer", "start_date": "2020-01", "end_date": "2022-01"}],
         "education": [{"degree": "BS Computer Science"}],
         "certifications": ["AWS Certified Developer"],
     }
-    outputs = ["I delivered 75% growth in 2025 at Unknown Corp."]
+    outputs = ["May 28, 2026\nDear Hiring Manager,\nI am excited to apply for this role."]
     issues = check_for_unsupported_claims(profile, outputs)
-    assert any("2025" in item for item in issues)
+    assert issues == []

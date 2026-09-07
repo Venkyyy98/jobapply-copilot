@@ -17,9 +17,14 @@ export async function SiteHeader() {
         </p>
       </div>
       <nav className="nav-links">
-        <Link href="/jobs">Jobs</Link>
+        {session?.user?.email ? <Link href="/app/jobs">Application tracker</Link> : <Link href="/jobs">Jobs</Link>}
+        <Link href="/how-it-works">How it works</Link>
+        <Link href="/install-extension">Install</Link>
         <Link href="/compliance">Compliance</Link>
+        <Link href="/privacy">Privacy</Link>
         <Link href="/app">Workspace</Link>
+        {session?.user?.email ? <Link href="/app/profile">Onboarding</Link> : null}
+        {session?.user?.email ? <Link href="/data-controls">Data</Link> : null}
         {session?.user?.email ? (
           <a href="/api/auth/signout?callbackUrl=/">Sign out</a>
         ) : (

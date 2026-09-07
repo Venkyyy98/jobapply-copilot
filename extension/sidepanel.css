@@ -2,6 +2,7 @@ body {
   min-width: 0;
 }
 
+main,
 .container {
   max-width: 100%;
   padding: 12px;

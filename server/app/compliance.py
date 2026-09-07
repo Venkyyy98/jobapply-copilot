@@ -39,12 +39,6 @@ def check_for_unsupported_claims(candidate_profile: dict[str, Any], generated_te
             if re.search(r"\b\d{1,3}%\b", mention):
                 issues.append("Detected percentage claim not traceable to profile facts.")
 
-    year_matches = re.findall(r"\b(19\d{2}|20\d{2})\b", "\n".join(generated_texts))
-    profile_years = set(re.findall(r"\b(19\d{2}|20\d{2})\b", str(candidate_profile)))
-    for year in year_matches:
-        if year not in profile_years:
-            issues.append(f"Year {year} is not present in candidate profile.")
-
     return sorted(set(issues))
 
 

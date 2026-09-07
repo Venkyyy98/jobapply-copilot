@@ -28,3 +28,6 @@ testpaths = ["tests"]
 
 [tool.setuptools]
 packages = ["app"]
+
+[tool.setuptools.package-data]
+app = ["fonts/*.ttf", "fonts/LICENSE_LIBERATION"]

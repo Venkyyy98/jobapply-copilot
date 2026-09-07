@@ -1,6 +1,10 @@
-Dear Hiring Manager,
+{% if role_track == "genai_engineer" %}
+I am excited to apply for the {{ job.title }} position at {{ job.company }}. My background in LLM applications, retrieval-augmented generation, data engineering, and production AI delivery aligns with roles focused on secure, governed, and scalable GenAI systems.
 
-{% if role_track == "data_scientist" %}
+My applied work includes LLM and RAG workflows, production APIs, evaluation patterns, and data pipelines that support reliable AI experiences. I bring a practical approach to balancing model quality, latency, cost, observability, and responsible use.
+
+I am particularly interested in {{ job.company }} because this role connects hands-on AI engineering with measurable product and client outcomes. I would welcome the opportunity to contribute across retrieval, orchestration, evaluation, and production integration.
+{% elif role_track == "data_scientist" %}
 I am excited to apply for the {{ job.title }} position at {{ job.company }}. My background in machine learning, predictive modeling, and applied analytics aligns well with roles that require experimentation, evaluation, and building data-driven solutions that support product or business decisions.
 
 Through my graduate work and applied projects, I have developed hands-on experience with modeling, feature engineering, and performance evaluation across real-world datasets. I have also worked on enterprise data workflows that strengthened my ability to build reliable end-to-end pipelines that support production-quality machine learning work.
@@ -19,14 +23,9 @@ In my experience, I have worked on projects that improved data quality, enabled 
 
 I am particularly interested in {{ job.company }} because this role offers the opportunity to contribute through analysis, stakeholder collaboration, and decision support. I would welcome the opportunity to bring a practical, detail-oriented approach to your team.
 {% else %}
-I am excited to apply for the {{ job.title }} position at {{ job.company }}. My background in SAP integration delivery, enterprise data workflows, and production reliability aligns well with roles focused on SAP CPI, BTP, and cross-system execution.
+I am excited to apply for the {{ job.title }} position at {{ job.company }}. My background in data engineering, analytics, and production reliability aligns well with roles focused on dependable technical delivery and measurable business outcomes.
 
-In my professional experience, I have worked on integration and data workflows that required strong delivery ownership, collaboration across teams, and close attention to validation, controls, and operational stability. These experiences prepared me well for roles that demand both technical depth and dependable execution.
+In my professional experience, I have worked on data and automation workflows that required strong delivery ownership, collaboration across teams, and close attention to validation, controls, and operational stability. These experiences prepared me well for roles that demand both technical depth and dependable execution.
 
-I am particularly interested in {{ job.company }} because this role brings together integration delivery, transformation work, and measurable business outcomes. I would welcome the opportunity to contribute my SAP and data-engineering experience to your team.
+I am particularly interested in {{ job.company }} because this role brings together technical delivery, transformation work, and measurable business outcomes. I would welcome the opportunity to contribute my engineering and analytics experience to your team.
 {% endif %}
-
-Thank you for your time and consideration. I would value the opportunity to discuss how my background can support your team.
-
-Sincerely,
-{{ candidate.identity.full_name }}

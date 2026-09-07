@@ -50,6 +50,138 @@ function smartTrim(text, maxChars = 15000) {
   return text.slice(0, Math.min(bestIndex, text.length)).trim();
 }
 
+function htmlToVisibleText(value) {
+  const container = document.createElement("div");
+  container.innerHTML = String(value || "");
+  return (container.innerText || container.textContent || "").trim();
+}
+
+function structuredJobPosting() {
+  const scripts = Array.from(document.querySelectorAll("script[type='application/ld+json']"));
+  for (const script of scripts) {
+    try {
+      const parsed = JSON.parse(script.textContent || "{}");
+      const values = Array.isArray(parsed) ? parsed : [parsed];
+      const queue = [...values];
+      while (queue.length) {
+        const item = queue.shift();
+        if (!item || typeof item !== "object") continue;
+        if (Array.isArray(item["@graph"])) queue.push(...item["@graph"]);
+        const kind = String(item["@type"] || "").toLowerCase();
+        if (kind !== "jobposting") continue;
+        const organization = item.hiringOrganization || {};
+        return {
+          title: String(item.title || "").trim(),
+          company: String(organization.name || "").trim(),
+          description: htmlToVisibleText(item.description || ""),
+        };
+      }
+    } catch {
+      // Ignore malformed structured data and continue with visible page extraction.
+    }
+  }
+  return { title: "", company: "", description: "" };
+}
+
+function cleanExtractedJobTitle(value) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^(?:job\s+)?application\s+for\s+/i, "")
+    .replace(/\s+at\s+[A-Z][A-Za-z0-9&.,'()\- ]{1,80}$/i, "")
+    .replace(/\s+job\s+in\s+.+$/i, "")
+    .replace(/\s+(?:-|–|—)\s+[A-Z][A-Za-z .'-]+,\s*(?:[A-Z]{2}|[A-Z][A-Za-z .'-]+)$/i, "")
+    .replace(/\s+in\s+[A-Z][A-Za-z .'-]+,\s*(?:[A-Z]{2}|[A-Z][A-Za-z .'-]+)$/i, "")
+    .trim();
+}
+
+function companyFromJobTitle(value) {
+  const raw = String(value || "").replace(/\s+/g, " ").trim();
+  const match = raw.match(/\s+at\s+([A-Z][A-Za-z0-9&.,'()\- ]{1,80})$/i);
+  return String(match?.[1] || "").trim();
+}
+
+function visibleJobTitle() {
+  const selectors = [
+    "main h1",
+    "article h1",
+    "[data-testid*='job-title']",
+    "[data-test*='job-title']",
+    ".job-title",
+    "h1",
+  ];
+  for (const selector of selectors) {
+    for (const node of document.querySelectorAll(selector)) {
+      const title = cleanExtractedJobTitle(textFromElement(node));
+      if (title && /\b(analyst|engineer|scientist|consultant|specialist|manager|intern|developer|co-?op)\b/i.test(title)) {
+        return title;
+      }
+    }
+  }
+  return "";
+}
+
+function metadataCompany() {
+  const selectors = [
+    "meta[property='og:site_name']",
+    "meta[name='application-name']",
+    "meta[name='author']",
+  ];
+  for (const selector of selectors) {
+    const value = String(document.querySelector(selector)?.getAttribute("content") || "")
+      .replace(/\s+(careers?|jobs?)$/i, "")
+      .trim();
+    if (value && !/^(greenhouse|lever|ashby|workday)$/i.test(value)) return value;
+  }
+  return "";
+}
+
+function cleanExtractedJobText(text) {
+  const noise = [
+    /^skip to main content$/i,
+    /^accept (all )?cookies$/i,
+    /^cookie (preferences|settings|policy)$/i,
+    /^privacy (choices|policy)$/i,
+    /^we use cookies.*$/i,
+    /^(req|job|requisition)\s*id\s*:?\s*$/i,
+    /^(req|job|requisition)\s*id\s*:?\s*[a-z]{0,5}\d+$/i,
+    /^[a-z]{1,5}\d{4,}\s+[a-z][a-z0-9 ,&/()#+.-]{0,80}$/i,
+    /^share via (email|facebook|linkedin|twitter)$/i,
+    /^apply now$/i,
+    /^save job$/i,
+    /^job details$/i,
+    /^similar jobs$/i,
+  ];
+  return String(text || "")
+    .replace(/\r/g, "\n")
+    .replace(/\u00a0/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && !noise.some((pattern) => pattern.test(line)))
+    .map((line) => line.replace(/^●\s*/, "- "))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function looksLikeJobDescription(text) {
+  const value = String(text || "").toLowerCase();
+  if (value.length < 120) return false;
+  const signals = [
+    "responsibilities",
+    "qualifications",
+    "requirements",
+    "about the role",
+    "what you'll do",
+    "preferred qualifications",
+    "minimum qualifications",
+    "job description",
+  ];
+  return signals.some((signal) => value.includes(signal)) ||
+    /\b(apply|position|role|hiring)\b/.test(value) && /\b(experience|skills|degree|python|sql|engineer|analyst|scientist)\b/.test(value);
+}
+
 function detectCaptcha() {
   const widgets = document.querySelectorAll(
     "iframe[src*='recaptcha'], iframe[src*='hcaptcha'], .g-recaptcha, .h-captcha, [data-sitekey]"
@@ -169,26 +301,92 @@ function localQuestionForField(field) {
   return "";
 }
 
+function firstExp(profile) {
+  return (Array.isArray(profile.workExperiences) ? profile.workExperiences : [])[0] || {};
+}
+
+function secondExp(profile) {
+  return (Array.isArray(profile.workExperiences) ? profile.workExperiences : [])[1] || {};
+}
+
+function firstEdu(profile) {
+  return (Array.isArray(profile.education) ? profile.education : [])[0] || {};
+}
+
+function resolveAddressForContext(profile) {
+  try {
+    const combined = `${String(location.href || "").toLowerCase()} ${String(document.body?.innerText || "").slice(0, 3000).toLowerCase()}`;
+    const caPattern = /\b(california|san francisco|sf bay|bay area|los angeles|san jose|palo alto|mountain view|sunnyvale|santa clara|fremont|oakland|berkeley|sacramento|san diego|irvine|antioch\b|94\d{3})\b/;
+    if (caPattern.test(combined) && (profile.addressLine1Ca || profile.cityCa)) {
+      return { line1: profile.addressLine1Ca || "", city: profile.cityCa || "", state: profile.stateCa || "CA", zip: profile.zipCa || "" };
+    }
+  } catch { /* ignore */ }
+  return { line1: profile.addressLine1NjNy || "", city: profile.cityNjNy || "", state: profile.stateNjNy || "", zip: profile.zipNjNy || "" };
+}
+
 function mapProfileToField(label, profile) {
   const normalized = label.toLowerCase();
   const fullName = String(profile.fullName || "").trim();
   const parts = fullName.split(/\s+/).filter(Boolean);
   const derivedFirst = profile.firstName || parts[0] || "";
   const derivedLast = profile.lastName || (parts.length > 1 ? parts[parts.length - 1] : "");
+  const addr = resolveAddressForContext(profile);
+  const exp0 = firstExp(profile);
+  const exp1 = secondExp(profile);
+  const edu0 = firstEdu(profile);
+
+  // EEO & Demographics — checked first to prevent collision with generic name/location matchers
+  if (/\bpreferred name\b|\bgoes by\b|\bnickname\b|\bpreferred first\b|\bdisplay name\b/.test(normalized)) return profile.preferredName || "";
+  if (/\bgender\b|\bsex\b/.test(normalized) && !/biological|assigned/.test(normalized)) return profile.gender || "";
+  if (/\bpronoun\b/.test(normalized)) return profile.pronouns || "";
+  if (/\bhispanic\b|\blatino\b|\blatinx\b/.test(normalized)) return profile.hispanicOrLatino || "";
+  if (/\brace\b|\bethnicity\b|\bracial\b/.test(normalized)) return profile.raceEthnicity || "";
+  if (/\bveteran\b|\bprotected veteran\b|\bmilitary service\b/.test(normalized)) return profile.veteranStatus || "";
+  if (/\bdisabilit\b|\bdisabled\b/.test(normalized)) return profile.disabilityStatus || "";
+
+  // Education fields — match when in an education context or specific edu labels are present
+  const inEduCtx = /\b(education|degree|academic|qualification|graduate|university|college|school|study|institution)\b/.test(normalized);
+  if (inEduCtx || /\bfield of study\b|\bmajor\b|\bgpa\b|\bgrad year\b|\bgraduation year\b/.test(normalized)) {
+    if (/\bdegree\b|\bhighest education\b|\blevel of education\b/.test(normalized)) return edu0.degree || profile.educationDegree || "";
+    if (/\bfield of study\b|\bmajor\b|\bprogram\b|\bconcentration\b|\barea of study\b/.test(normalized) && !/field of work/.test(normalized)) return edu0.field || profile.educationField || "";
+    if (/\bschool\b|\buniversity\b|\bcollege\b|\binstitution\b/.test(normalized) && inEduCtx) return edu0.school || profile.educationSchool || "";
+    if (/\bgpa\b|\bgrade point\b/.test(normalized)) return edu0.gpa || profile.educationGpa || "";
+    if (/\bgrad(uation)? year\b|\bend year\b|\bclass of\b/.test(normalized)) return edu0.endYear || edu0.gradYear || profile.educationEndYear || "";
+    if (/\bstart year\b/.test(normalized) && inEduCtx) return edu0.startYear || profile.educationStartYear || "";
+  }
+
+  // Work experience fields — match when explicit experience context is present
+  const inExpCtx = /\b(work experience|employment|current employer|most recent employer|previous employer|job history|work history|professional experience)\b/.test(normalized);
+  if (inExpCtx) {
+    const isPrev = /\bprevious\b|\bformer\b|\bprior\b|\bpast\b/.test(normalized);
+    const expEntry = isPrev ? exp1 : exp0;
+    if (/\bcompany\b|\bemployer\b|\borganization\b/.test(normalized)) return expEntry.company || "";
+    if (/\btitle\b|\bposition\b|\brole\b/.test(normalized) && !/role family/.test(normalized)) return expEntry.title || "";
+    if (/\bstart\b.*\bdate\b|\bdate.*\bstart\b/.test(normalized)) return expEntry.startDate || "";
+    if (/\bend\b.*\bdate\b|\bdate.*\bend\b/.test(normalized)) return expEntry.endDate || "Present";
+    if (/\bdescription\b|\bresponsibilit\b|\bduties\b/.test(normalized)) return expEntry.description || "";
+  }
+
+  // Address — specific patterns before generic location
+  if (/\bstreet address\b|\baddress line 1\b|\baddress line1\b/.test(normalized) && !/email/.test(normalized)) return addr.line1;
+  if (/\bzip\b|\bpostal code\b|\bzipcode\b/.test(normalized)) return addr.zip;
+
+  // Standard profile fields
   const checks = [
     { keys: ["first name", "given name"], value: derivedFirst },
     { keys: ["last name", "surname", "family name"], value: derivedLast },
-    { keys: ["full name", "name"], value: fullName },
+    { keys: ["full name", "legal name", "name"], value: fullName },
     { keys: ["email"], value: profile.email || "" },
     { keys: ["phone", "mobile", "telephone"], value: profile.phone || "" },
     { keys: ["linkedin"], value: profile.linkedin || "" },
     { keys: ["github"], value: profile.github || "" },
     { keys: ["portfolio", "website"], value: profile.portfolio || "" },
     { keys: ["state", "province", "region"], value: derivedProfile(profile).state || "" },
+    { keys: ["city"], value: addr.city || profile.location || "" },
     { keys: ["work authorization"], value: profile.workAuthorization || "" },
     { keys: ["sponsorship"], value: profile.sponsorship || "" },
-    { keys: ["location", "city"], value: profile.location || "" },
-    { keys: ["salary range", "desired salary", "compensation"], value: profile.desiredSalaryRange || "" }
+    { keys: ["location"], value: profile.location || "" },
+    { keys: ["salary range", "desired salary", "compensation"], value: profile.desiredSalaryRange || "" },
   ];
 
   for (const item of checks) {
@@ -314,10 +512,15 @@ function inferUsStateFromLocation(location) {
 
 function aiFieldValueByKey(profile, key) {
   const p = derivedProfile(profile || {});
+  const exp0 = firstExp(profile);
+  const exp1 = secondExp(profile);
+  const edu0 = firstEdu(profile);
+  const addr = resolveAddressForContext(profile);
   const map = {
     first_name: p.firstName || "",
     last_name: p.lastName || "",
     full_name: p.fullName || "",
+    preferred_name: profile.preferredName || "",
     email: p.email || "",
     phone: p.phone || "",
     linkedin: p.linkedin || "",
@@ -328,6 +531,28 @@ function aiFieldValueByKey(profile, key) {
     work_authorization: p.workAuthorization || "",
     sponsorship: p.sponsorship || "",
     desired_salary_range: p.desiredSalaryRange || "",
+    gender: profile.gender || "",
+    pronouns: profile.pronouns || "",
+    hispanic_or_latino: profile.hispanicOrLatino || "",
+    race_ethnicity: profile.raceEthnicity || "",
+    veteran_status: profile.veteranStatus || "",
+    disability_status: profile.disabilityStatus || "",
+    current_company: exp0.company || "",
+    current_title: exp0.title || "",
+    current_start_date: exp0.startDate || "",
+    current_end_date: exp0.endDate || "",
+    current_description: exp0.description || "",
+    previous_company: exp1.company || "",
+    previous_title: exp1.title || "",
+    previous_description: exp1.description || "",
+    education_degree: edu0.degree || profile.educationDegree || "",
+    education_field: edu0.field || profile.educationField || "",
+    education_school: edu0.school || profile.educationSchool || "",
+    education_gpa: edu0.gpa || profile.educationGpa || "",
+    education_grad_year: edu0.endYear || edu0.gradYear || profile.educationEndYear || "",
+    street_address: addr.line1,
+    address_city: addr.city,
+    zip_code: addr.zip,
   };
   return map[key] || "";
 }
@@ -339,15 +564,37 @@ function aiScoreField(field, profile) {
     first_name: ["first name", "given name", "firstname", "given"],
     last_name: ["last name", "surname", "family name", "lastname", "family"],
     full_name: ["full name", "legal name", "name"],
+    preferred_name: ["preferred name", "preferred first name", "display name", "goes by", "nickname"],
     email: ["email", "e-mail"],
     phone: ["phone", "mobile", "telephone", "tel"],
     linkedin: ["linkedin"],
     github: ["github"],
     portfolio: ["portfolio", "website", "personal site", "url"],
-    location: ["location", "city", "address"],
+    location: ["location", "address"],
     state: ["state", "province", "region"],
     work_authorization: ["work authorization", "authorized", "work permit", "eligible to work"],
     sponsorship: ["sponsorship", "sponsor", "visa support", "require visa"],
+    gender: ["gender", "sex"],
+    pronouns: ["pronouns", "preferred pronouns"],
+    hispanic_or_latino: ["hispanic", "latino", "latinx", "hispanic or latino"],
+    race_ethnicity: ["race", "ethnicity", "racial background"],
+    veteran_status: ["veteran", "military service", "protected veteran", "veteran status"],
+    disability_status: ["disability", "disabled", "accommodation"],
+    current_company: ["current employer", "current company", "most recent employer", "employer name", "company name"],
+    current_title: ["current job title", "current position", "most recent position", "job title", "position title"],
+    current_start_date: ["current start date", "start of employment", "employment start"],
+    current_end_date: ["current end date", "end of employment"],
+    current_description: ["responsibilities", "duties", "role description", "job description"],
+    previous_company: ["previous employer", "former employer", "prior employer"],
+    previous_title: ["previous title", "former title", "prior position"],
+    education_degree: ["degree", "degree type", "highest degree", "level of education"],
+    education_field: ["field of study", "major", "program of study", "area of study", "concentration"],
+    education_school: ["school name", "university", "college", "institution"],
+    education_gpa: ["gpa", "grade point average", "cumulative gpa"],
+    education_grad_year: ["graduation year", "year of graduation", "grad year", "end year"],
+    street_address: ["street address", "address line 1", "address line1"],
+    address_city: ["city name"],
+    zip_code: ["zip code", "postal code", "zipcode"],
   };
 
   let bestKey = "";
@@ -508,6 +755,18 @@ function chooseBooleanByLabel(label, profile) {
     const raw = String(profile.employmentRestriction || "no").toLowerCase();
     if (raw.includes("yes")) return "yes";
     return "no";
+  }
+  if (/\b(veteran|protected veteran|military service|veteran status)\b/.test(normalized)) {
+    const raw = String(profile.veteranStatus || "no").toLowerCase();
+    return (raw.includes("yes") || (raw.includes("veteran") && !raw.includes("not") && !raw.includes("no"))) ? "yes" : "no";
+  }
+  if (/\bdisabilit/.test(normalized)) {
+    const raw = String(profile.disabilityStatus || "no").toLowerCase();
+    return raw.includes("yes") ? "yes" : "no";
+  }
+  if (/\b(hispanic|latino|latinx)\b/.test(normalized)) {
+    const raw = String(profile.hispanicOrLatino || "no").toLowerCase();
+    return raw.includes("yes") ? "yes" : "no";
   }
   return "";
 }
@@ -810,6 +1069,7 @@ function answerQuestionBlocks(profile, recorder = null) {
     if (!isVisible(block)) continue;
     const text = normalizeSpace(block.innerText);
     if (!text) continue;
+    if (/\b(sms|whatsapp|text alert|newsletter|marketing|promotional|recruitment campaign|talent community)\b/i.test(text.slice(0, 200))) continue;
     if (!/authorized to work|sponsorship|primary residence|salary within your range|require sponsorship/i.test(text)) {
       const custom = customAnswerForQuestion(text, profile || {});
       if (!custom) continue;
@@ -1222,12 +1482,17 @@ function fillCustomComboboxes(profile, recorder = null) {
   ).filter((el) => isVisible(el));
 
   let changed = 0;
+  const OPTIONAL_SIGNALS = /\b(sms|whatsapp|text alert|newsletter|marketing|promotional|recruitment campaign|talent community|contact me|updates|notifications?)\b/i;
   const desiredAnswerForLabel = (labelText, box) => {
+    const labelOnly = String(labelText || "").toLowerCase();
     const question = normalizeSpace(comboboxQuestionContainer(box)?.innerText || "").toLowerCase();
-    const low = `${String(labelText || "").toLowerCase()} ${question}`;
+    const low = `${labelOnly} ${question}`;
+    // Skip optional marketing/consent opt-ins — never auto-fill these
+    if (OPTIONAL_SIGNALS.test(labelOnly) || OPTIONAL_SIGNALS.test(question.slice(0, 120))) return "";
     const mapped = mappedDropdownValue(low, profile || {});
     if (mapped) return mapped;
-    if (/\bstate\b|\bprovince\b|\bregion\b/.test(low)) return stateValues(profile)[0] || "";
+    // Only check state on the direct label, not the full container text (which may contain already-filled field values)
+    if (/\bstate\b|\bprovince\b|\bregion\b/.test(labelOnly)) return stateValues(profile)[0] || "";
     const bool = chooseBooleanByLabel(low, profile || {});
     if (bool === "yes") return "Yes";
     if (bool === "no") return "No";
@@ -1448,6 +1713,103 @@ function fillAriaSwitches(profile) {
   return changed;
 }
 
+function fillExperienceSections(profile, recorder = null) {
+  const exps = Array.isArray(profile.workExperiences) ? profile.workExperiences : [];
+  if (!exps.length) return 0;
+  let filled = 0;
+
+  // Collect all editable inputs
+  const allInputs = Array.from(
+    document.querySelectorAll("input:not([type='hidden']):not([type='submit']):not([type='button']), textarea, select")
+  ).filter((el) => isVisible(el) && !el.disabled && !el.readOnly);
+
+  // Group inputs by experience-index from their name attribute (e.g. work_experiences[0][company])
+  const atsPrefixes = ["work_experience", "work_experiences", "employment", "employer", "job_history"];
+  const buckets = {};
+  for (const field of allInputs) {
+    const name = (field.getAttribute("name") || "").toLowerCase();
+    if (!name) continue;
+    if (!atsPrefixes.some((p) => name.includes(p))) continue;
+    const idxMatch = name.match(/\[(\d+)\]/) || name.match(/_(\d+)_/);
+    const idx = idxMatch ? parseInt(idxMatch[1], 10) : 0;
+    (buckets[idx] = buckets[idx] || []).push(field);
+  }
+
+  for (const [idxStr, fields] of Object.entries(buckets)) {
+    const exp = exps[parseInt(idxStr, 10)] || exps[0] || {};
+    for (const field of fields) {
+      if (hasMeaningfulExistingValue(field)) continue;
+      const name = (field.getAttribute("name") || "").toLowerCase();
+      const lbl = labelTextForField(field).toLowerCase();
+      const combined = `${name} ${lbl}`;
+      let value = "";
+      if (/company|employer|organization/.test(combined)) value = exp.company || "";
+      else if (/title|position|role/.test(combined) && !/role family/.test(combined)) value = exp.title || "";
+      else if (/\bstart\b/.test(combined) && /date|month|year/.test(combined)) value = exp.startDate || "";
+      else if (/\bend\b/.test(combined) && /date|month|year/.test(combined)) value = exp.endDate || "Present";
+      else if (/description|responsibilit|duties/.test(combined)) value = exp.description || "";
+      if (!value) continue;
+      if (field.tagName.toLowerCase() === "select") { fillSelectField(field, value); }
+      else { fillField(field, value); }
+      filled++;
+      if (recorder) recorder.add(lbl || name, value, "text");
+    }
+  }
+
+  // Also handle standalone "Current Employer / Most Recent Employer" labels
+  for (const field of allInputs) {
+    if (hasMeaningfulExistingValue(field)) continue;
+    const lbl = labelTextForField(field).toLowerCase();
+    const nameId = `${field.getAttribute("name") || ""} ${field.getAttribute("id") || ""}`.toLowerCase();
+    const combined = `${lbl} ${nameId}`.trim();
+    const isPrev = /\bprevious\b|\bformer\b|\bprior\b|\bpast\b/.test(combined);
+    const expEntry = isPrev ? (exps[1] || {}) : (exps[0] || {});
+    let value = "";
+    if (/\bcurrent employer\b|\bmost recent employer\b|\bprevious employer\b/.test(combined)) value = expEntry.company || "";
+    else if (/\bcurrent (job )?title\b|\bcurrent position\b|\bmost recent (job )?title\b/.test(combined)) value = expEntry.title || "";
+    if (!value) continue;
+    fillField(field, value);
+    filled++;
+    if (recorder) recorder.add(lbl || nameId, value, "text");
+  }
+
+  return filled;
+}
+
+function fillEducationSections(profile, recorder = null) {
+  const edu = Array.isArray(profile.education) ? profile.education : [];
+  if (!edu.length) return 0;
+  let filled = 0;
+
+  const allInputs = Array.from(
+    document.querySelectorAll("input:not([type='hidden']):not([type='submit']):not([type='button']), textarea, select")
+  ).filter((el) => isVisible(el) && !el.disabled && !el.readOnly);
+
+  const edPrefixes = ["education", "academic", "school_name", "university", "college", "degree_name"];
+  for (const field of allInputs) {
+    const name = (field.getAttribute("name") || "").toLowerCase();
+    if (!name) continue;
+    if (!edPrefixes.some((p) => name.includes(p))) continue;
+    if (hasMeaningfulExistingValue(field)) continue;
+    const lbl = labelTextForField(field).toLowerCase();
+    const combined = `${name} ${lbl}`;
+    const edu0 = edu[0] || {};
+    let value = "";
+    if (/school|university|college|institution/.test(combined)) value = edu0.school || profile.educationSchool || "";
+    else if (/\bdegree\b/.test(combined)) value = edu0.degree || profile.educationDegree || "";
+    else if (/field|major|program|concentration/.test(combined) && !/field of work/.test(combined)) value = edu0.field || profile.educationField || "";
+    else if (/\bgpa\b|\bgrade/.test(combined)) value = edu0.gpa || profile.educationGpa || "";
+    else if (/grad(uation)? year|end year|class of/.test(combined)) value = edu0.endYear || profile.educationEndYear || "";
+    else if (/start year/.test(combined)) value = edu0.startYear || profile.educationStartYear || "";
+    if (!value) continue;
+    if (field.tagName.toLowerCase() === "select") { fillSelectField(field, value); }
+    else { fillField(field, value); }
+    filled++;
+    if (recorder) recorder.add(lbl || name, value, "text");
+  }
+  return filled;
+}
+
 async function safePrefill(profile, options = {}) {
   const platform = detectPlatform();
   const captchaPresent = detectCaptcha();
@@ -1656,6 +2018,12 @@ async function safePrefill(profile, options = {}) {
     filledCount += skillsFilled;
   }
 
+  const expFilled = fillExperienceSections(profile || {}, qbRecorder);
+  if (expFilled > 0) filledCount += expFilled;
+
+  const eduFilled = fillEducationSections(profile || {}, qbRecorder);
+  if (eduFilled > 0) filledCount += eduFilled;
+
   if (candidateFields === 0) {
     const iframeCount = document.querySelectorAll("iframe").length;
     if (iframeCount > 0) {
@@ -1747,12 +2115,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.requireTop && window.top !== window) {
       return false;
     }
-    let text = extractBySelectors();
-    if (!text || text.length < 400) {
-      text = fallbackVisibleText();
-    }
+    const structured = structuredJobPosting();
+    let text = cleanExtractedJobText(structured.description);
+    if (!looksLikeJobDescription(text)) text = cleanExtractedJobText(extractBySelectors());
+    if (!looksLikeJobDescription(text)) text = cleanExtractedJobText(fallbackVisibleText());
+    if (!looksLikeJobDescription(text)) text = "";
+    const headingTitle = visibleJobTitle();
+    const headingCompany = companyFromJobTitle(
+      Array.from(document.querySelectorAll("main h1, article h1, h1"))
+        .map((node) => textFromElement(node))
+        .find((value) => /\s+at\s+/i.test(value)) || ""
+    );
     const payload = {
       pageTitle: document.title || "",
+      jobTitle: headingTitle || cleanExtractedJobTitle(structured.title),
+      company: structured.company || headingCompany || metadataCompany(),
       url: location.href,
       jobText: smartTrim(text || ""),
       captchaDetected: detectCaptcha()
