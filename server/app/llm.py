@@ -179,7 +179,10 @@ Hard constraints:
 - Use only provided candidate/profile/job/contact details.
 - Do not invent achievements, facts, or relationships.
 - Keep LinkedIn note <= 280 characters.
-- Explicitly mention that the user has applied (or is applying) to the role.
+- Write the LinkedIn note as a short connection request, not a company research summary.
+- If a verified shared company or school is provided, lead with that shared connection.
+- Explicitly mention that the user is interested in the role, but do not mention lawsuits, legal challenges, scandals, news, or company risks in the LinkedIn note.
+- Never use placeholders such as "Name", "[Name]", "Title", or "there" when a contact is missing; use the contact's supplied name or omit the draft with a clear validation error.
 - The email must follow this exact paragraph structure:
   1. "Hi <first name>,"
   2. State that the candidate applied for the role at the company and found the contact while researching the team.
