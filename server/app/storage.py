@@ -293,14 +293,17 @@ class Storage:
                 image_url=str(payload.get("user_image_url", "")),
             )["id"]
         with self._conn() as conn:
-            cur = conn.execute(
-                """
+            insert_sql = """
                 INSERT INTO jobs (
                     url, page_title, company_hint, title, company, job_text, summary, fit_score,
                     company_issue_brief, fit_reasons, tailoring_plan, suggested_bullets, common_answers, compliance_notes,
                     status, outputs, owner_user_id, created_at, updated_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
+            """
+            if self.database_url:
+                insert_sql += " RETURNING id"
+            cur = conn.execute(
+                insert_sql,
                 (
                     payload.get("url", ""),
                     payload.get("page_title", ""),
@@ -323,7 +326,7 @@ class Storage:
                     now,
                 ),
             )
-            job_id = int(cur.lastrowid)
+            job_id = int(cur.fetchone()["id"] if self.database_url else cur.lastrowid)
         self.upsert_feed_item_from_job(job_id)
         return job_id
 
