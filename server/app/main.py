@@ -79,6 +79,7 @@ from .target_finder import find_target_contacts
 from .tailoring import (
     build_diff_summary,
     build_tailoring_plan,
+    _filter_inaccurate_fit_reasons,
     keyword_coverage_for_text,
     rewrite_project_descriptions,
     rewrite_selected_bullets,
@@ -661,6 +662,7 @@ def analyze_job(
         title_hint=payload.title_hint,
     )
     tailoring = build_tailoring_plan(active_llm, job_fields, candidate, preferences)
+    fit_reasons = _filter_inaccurate_fit_reasons(list(tailoring.get("fit_reasons", [])), job_fields)
     llm_diagnostics = active_llm.diagnostics
     ai_assisted = bool(llm_diagnostics["successful_calls"])
     generation_warnings = []
@@ -684,7 +686,7 @@ def analyze_job(
             "summary": job_fields.get("summary", ""),
             "fit_score": tailoring["fit_score"],
             "company_issue_brief": {},
-            "fit_reasons": tailoring["fit_reasons"],
+            "fit_reasons": fit_reasons,
             "tailoring_plan": tailoring["tailoring_plan"],
             "suggested_bullets": tailoring["suggested_bullets"],
             "common_answers": tailoring["common_answers"],
@@ -702,7 +704,7 @@ def analyze_job(
             "summary": job_fields.get("summary", ""),
             "fit_score": tailoring["fit_score"],
             "company_issue_brief": {},
-            "fit_reasons": tailoring["fit_reasons"],
+            "fit_reasons": fit_reasons,
             "tailoring_plan": tailoring["tailoring_plan"],
             "suggested_bullets": tailoring["suggested_bullets"],
             "common_answers": tailoring["common_answers"],
@@ -729,7 +731,7 @@ def analyze_job(
         location=str(job_fields.get("location", "")),
         summary=job_fields.get("summary", ""),
         fit_score=tailoring["fit_score"],
-        fit_reasons=tailoring["fit_reasons"],
+        fit_reasons=fit_reasons,
         tailoring_plan=tailoring["tailoring_plan"],
         suggested_bullets=tailoring["suggested_bullets"],
         suggested_project_ids=list(tailoring.get("suggested_project_ids", [])),

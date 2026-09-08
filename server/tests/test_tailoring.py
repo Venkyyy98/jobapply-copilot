@@ -8,7 +8,15 @@ from app.main import _generated_resume_fit_score, clean_role_for_filename
 from app.cover_letter_render import render_cover_letter_text
 from app.exporters import DEFAULT_RESUME_LAYOUT, _resume_pdf_story
 from app.llm import LLMClient
-from app.tailoring import _base_answers, build_tailoring_plan, detect_role_track, detect_sector, extract_ats_keywords, sanitize_ats_keywords
+from app.tailoring import (
+    _base_answers,
+    _filter_inaccurate_fit_reasons,
+    build_tailoring_plan,
+    detect_role_track,
+    detect_sector,
+    extract_ats_keywords,
+    sanitize_ats_keywords,
+)
 
 
 def test_resume_pdf_inline_labels_use_bold_font() -> None:
@@ -170,6 +178,22 @@ def test_product_data_scientist_role_gets_credit_for_transferable_analytics() ->
     assert "Role asks for 5+ years" not in " ".join(plan["fit_reasons"])
     assert "Profile exceeds the stated 3+ year experience threshold." in plan["fit_reasons"]
     assert "Causal Inference" in plan["missing_keywords"]
+
+
+def test_fit_reason_filter_removes_false_five_year_reason() -> None:
+    job_fields = {
+        "title": "Data Scientist",
+        "company": "Twitch",
+        "requirements": ["3+ years of experience as a data scientist.", "Proficiency in SQL and Python."],
+    }
+    reasons = [
+        "Role asks for 5+ years; profile currently states 4+ years, so review seniority fit manually.",
+        "Profile exceeds the stated 3+ year experience threshold.",
+    ]
+
+    filtered = _filter_inaccurate_fit_reasons(reasons, job_fields)
+
+    assert filtered == ["Profile exceeds the stated 3+ year experience threshold."]
 
 
 def test_pasted_data_scientist_text_scores_higher_than_hardware_role() -> None:

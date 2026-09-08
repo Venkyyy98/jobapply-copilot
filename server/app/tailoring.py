@@ -296,12 +296,12 @@ def _has_any(corpus: str, terms: list[str]) -> bool:
 def _filter_inaccurate_fit_reasons(reasons: list[str], job_fields: dict[str, Any]) -> list[str]:
     job_corpus = _job_corpus(job_fields)
     filtered: list[str] = []
-    has_five_year_requirement = _has_any(job_corpus, ["5+ years", "5 years", "five years"])
+    has_five_year_requirement = bool(re.search(r"(?<![\d.])5\s*\+?\s*years?\b|\bfive\s+years?\b", job_corpus))
     for reason in reasons:
         text = str(reason).strip()
         if not text:
             continue
-        if not has_five_year_requirement and re.search(r"\b5\+?\s*years?\b|\bfive years?\b", text.lower()):
+        if not has_five_year_requirement and re.search(r"(?<![\d.])5\s*\+?\s*years?\b|\bfive\s+years?\b", text.lower()):
             continue
         filtered.append(text)
     return filtered
