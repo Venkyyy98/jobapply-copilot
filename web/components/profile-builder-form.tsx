@@ -79,15 +79,23 @@ function bulletsToText(bullets: Bullet[] | string[]): string {
   return bullets
     .map((bullet) => (typeof bullet === "string" ? bullet : bullet.text))
     .filter(Boolean)
+    .map((text) => {
+      const trimmed = text.trim();
+      return /^[-*•]\s+/.test(trimmed) ? trimmed : `- ${trimmed}`;
+    })
     .join("\n");
 }
 
 function textToBullets(value: string, prefix: string): Bullet[] {
   return value
     .split(/\r?\n/)
-    .map((item) => item.trim())
+    .map((item) => item.trim().replace(/^[-*•]\s+/, ""))
     .filter(Boolean)
     .map((text, index) => ({ id: `${prefix}_b${index + 1}`, text }));
+}
+
+function bulletLinesToArray(value: string): string[] {
+  return linesToArray(value).map((item) => item.replace(/^[-*•]\s+/, "").trim()).filter(Boolean);
 }
 
 function normalizeExperience(value: unknown, index: number): Experience {
@@ -222,7 +230,7 @@ export function ProfileBuilderForm({ candidateProfile, preferences }: ProfileBui
         link_label: String(formData.get(`project_${index}_link_label`) || "").trim() || "GitHub",
         url: String(formData.get(`project_${index}_url`) || "").trim(),
         description: String(formData.get(`project_${index}_description`) || "").trim(),
-          bullets: linesToArray(String(formData.get(`project_${index}_bullets`) || ""))
+          bullets: bulletLinesToArray(String(formData.get(`project_${index}_bullets`) || ""))
       })).filter((item) => item.name || item.description || item.bullets.length),
       technical_skills: Array.from({ length: skillGroupCount }, (_, index) => ({
         category: String(formData.get(`skill_group_${index}_category`) || "").trim(),
@@ -379,7 +387,7 @@ export function ProfileBuilderForm({ candidateProfile, preferences }: ProfileBui
               <label>Link label<input name={`project_${index}_link_label`} defaultValue={item.link_label} /></label>
               <label className="wide">URL<input name={`project_${index}_url`} defaultValue={item.url} /></label>
               <label className="wide">Description<textarea name={`project_${index}_description`} rows={3} defaultValue={item.description} /></label>
-              <label className="wide">Project bullets<textarea name={`project_${index}_bullets`} rows={4} defaultValue={item.bullets.join("\n")} /></label>
+              <label className="wide">Project bullets<textarea name={`project_${index}_bullets`} rows={4} defaultValue={bulletsToText(item.bullets)} /></label>
             </div>
           </div>
         ))}

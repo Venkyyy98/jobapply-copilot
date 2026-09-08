@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "JobApply Copilot",
   "description": "Ethical application copilot: analyze jobs, tailor docs, and track applications.",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "permissions": ["activeTab", "scripting", "storage", "downloads", "sidePanel", "tabs"],
   "host_permissions": [
     "https://jobapply-copilot-api.onrender.com/*",
