@@ -71,7 +71,7 @@ from .models import (
     UserProfileResponse,
     UserStatsResponse,
 )
-from .parser import parse_job_fields, validate_job_content
+from .parser import parse_job_fields, trim_to_job_description, validate_job_content
 from .resume_render import render_resume_text
 from .security import install_log_redaction, public_error_detail, redact_text
 from .storage import Storage
@@ -647,7 +647,8 @@ def analyze_job(
     enforce_daily_quota(api_user, "analyze_job", settings.analyze_daily_quota)
     candidate, preferences = require_complete_candidate_context(api_user)
 
-    invalid_job_reason = validate_job_content(payload.job_text, payload.page_title, payload.company_hint)
+    trimmed_job_text = trim_to_job_description(payload.job_text)
+    invalid_job_reason = validate_job_content(trimmed_job_text, payload.page_title, payload.company_hint)
     if invalid_job_reason:
         raise HTTPException(status_code=400, detail=invalid_job_reason)
 
@@ -655,7 +656,7 @@ def analyze_job(
     profile_issues = check_profile_completeness(candidate)
     job_fields = parse_job_fields(
         llm=active_llm,
-        job_text=payload.job_text,
+        job_text=trimmed_job_text,
         page_title=payload.page_title,
         company_hint=payload.company_hint,
         url=payload.url,
@@ -682,7 +683,7 @@ def analyze_job(
             "title": job_fields.get("title", "Unknown Role"),
             "company": job_fields.get("company", "Unknown Company"),
             "location": job_fields.get("location", ""),
-            "job_text": payload.job_text,
+            "job_text": trimmed_job_text,
             "summary": job_fields.get("summary", ""),
             "fit_score": tailoring["fit_score"],
             "company_issue_brief": {},

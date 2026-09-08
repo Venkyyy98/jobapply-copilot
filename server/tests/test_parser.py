@@ -1,5 +1,6 @@
 from app.llm import LLMClient
 from app.parser import parse_job_fields
+from app.parser import trim_to_job_description
 from app.parser import validate_job_content
 
 
@@ -25,6 +26,24 @@ Requirements:
     assert result["company"] == "Example Corp"
     assert any("python" in r.lower() for r in result["requirements"])
     assert "Aws" in result["skills"] or "AWS" in result["skills"]
+
+
+def test_trim_to_job_description_removes_application_form_tail():
+    text = """
+Data Scientist
+You Have:
+3+ years of experience as a data scientist.
+Proficiency in SQL and Python.
+Apply for this job
+Voluntary Self-Identification of Disability
+People can become disabled, so we need to ask this question at least every five years.
+"""
+
+    trimmed = trim_to_job_description(text)
+
+    assert "3+ years of experience" in trimmed
+    assert "every five years" not in trimmed
+    assert "Voluntary Self-Identification" not in trimmed
 
 
 def test_parse_job_fields_skips_view_more_jobs_heading():

@@ -73,6 +73,24 @@ def _find_lines(text: str) -> list[str]:
     return [line.strip(" -\t") for line in text.splitlines() if line.strip()]
 
 
+def trim_to_job_description(job_text: str) -> str:
+    text = str(job_text or "")
+    stop_patterns = [
+        r"(?im)^\s*apply for this job\s*$",
+        r"(?im)^\s*create a job alert\s*$",
+        r"(?im)^\s*autofill my application\s*$",
+        r"(?im)^\s*voluntary self-identification\b.*$",
+        r"(?im)^\s*gender\s*$",
+        r"(?im)^\s*veteran status\s*$",
+        r"(?im)^\s*disability status\s*$",
+        r"(?im)^\s*public burden statement\b.*$",
+    ]
+    stops = [match.start() for pattern in stop_patterns if (match := re.search(pattern, text))]
+    if not stops:
+        return text.strip()
+    return text[: min(stops)].strip()
+
+
 def _looks_like_noise_title(value: str) -> bool:
     raw = str(value or "").strip()
     low = raw.lower()
@@ -211,6 +229,7 @@ def parse_job_fields(
     url: str,
     title_hint: str = "",
 ) -> dict[str, Any]:
+    job_text = trim_to_job_description(job_text)
     lines = _find_lines(job_text)
     explicit_title = _clean_title(title_hint)
     explicit_company = _clean_company(company_hint)
