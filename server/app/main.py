@@ -344,6 +344,18 @@ def _generated_resume_fit_score(job_fields: dict[str, Any], resume_text: str, at
         resume_corpus, ["5+ years", "5 years", "five years"]
     ):
         score -= 8
+    elif _text_has_any(job_corpus, ["4+ years", "4 years", "four years"]) and _text_has_any(
+        resume_corpus, ["4+ years", "4 years", "four years"]
+    ):
+        score += 5
+    elif _text_has_any(job_corpus, ["3+ years", "3 years", "three years"]) and _text_has_any(
+        resume_corpus, ["4+ years", "4 years", "four years"]
+    ):
+        score += 6
+    elif _text_has_any(job_corpus, ["2+ years", "2 years", "two years"]) and _text_has_any(
+        resume_corpus, ["4+ years", "4 years", "four years"]
+    ):
+        score += 6
     if _text_has_any(job_corpus, ["kubernetes", "causal inference", "airflow"]) and not _text_has_any(
         resume_corpus, ["kubernetes", "causal inference", "airflow"]
     ):

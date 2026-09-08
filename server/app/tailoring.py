@@ -92,6 +92,13 @@ ATS_TERM_ALIASES: list[tuple[str, str]] = [
     ("autonomous agents", "Autonomous Agents"),
     ("recommendation systems", "Recommendation Systems"),
     ("recommendation system", "Recommendation Systems"),
+    ("causal inference methods", "Causal Inference"),
+    ("causal inference", "Causal Inference"),
+    ("quasi-experimental methods", "Quasi-Experimental Methods"),
+    ("quasi experimental methods", "Quasi-Experimental Methods"),
+    ("a/b experiments", "A/B Testing"),
+    ("a/b experiment", "A/B Testing"),
+    ("a/b test design", "A/B Testing"),
     ("statistical analysis", "Statistical Analysis"),
     ("predictive modeling", "Predictive Modeling"),
     ("time-series forecasting", "Time-Series Forecasting"),
@@ -237,8 +244,17 @@ KEYWORD_PROFILE_ALIASES: dict[str, list[str]] = {
     "Data Exploration": ["exploratory data analysis", "eda"],
     "Data Mining": ["exploratory data analysis", "data cleaning", "preprocessing"],
     "Cloud Data Platforms": ["cloud platforms", "aws", "gcp", "azure", "databricks", "snowflake"],
+    "Dashboard creation": ["dashboard", "dashboards", "power bi", "tableau", "plotly dash", "streamlit"],
+    "Dashboards": ["dashboard", "dashboards", "power bi", "tableau", "plotly dash", "streamlit"],
+    "Reporting": ["reporting", "reports", "power bi", "tableau", "stakeholder-ready reporting"],
+    "Experimentation": ["experimentation", "experiment", "experiments", "model evaluation", "benchmarking", "a/b testing"],
+    "A/B Testing": ["a/b testing", "experiment", "experiments", "experimentation"],
+    "Classification": ["classification", "classifier", "cnn", "mobilenet", "random forest", "logistic regression"],
+    "Segmentation": ["segmentation", "clustering", "classification"],
+    "Revenue optimization": ["portfolio analysis", "forecasting", "business impact", "optimization"],
+    "Pricing": ["portfolio analysis", "forecasting", "business impact"],
     "Text Mining": ["natural language processing", "nlp", "finbert"],
-    "Statistical Analysis": ["statistical analysis", "hypothesis testing", "anova"],
+    "Statistical Analysis": ["statistical analysis", "hypothesis testing", "anova", "regression", "forecasting", "model evaluation", "f1-score"],
 }
 
 
@@ -324,6 +340,12 @@ def _deterministic_fit_score(
     ):
         score += 15
         reasons.append("Profile contains strong data science and machine learning evidence.")
+        if _has_any(job_corpus, ["experiment", "pricing", "segmentation", "revenue", "dashboard", "reporting", "stakeholder"]) and _has_any(
+            candidate_corpus,
+            ["forecast", "model evaluation", "f1-score", "dashboard", "power bi", "stakeholder", "business", "analytics", "classification"],
+        ):
+            score += 8
+            reasons.append("Profile has transferable product analytics evidence across modeling, reporting, and stakeholder-facing analysis.")
     elif role_track == "data_engineer" and _has_any(candidate_corpus, ["pipeline", "etl", "spark", "databricks", "data quality"]):
         score += 15
         reasons.append("Profile contains strong data engineering evidence.")
@@ -352,12 +374,28 @@ def _deterministic_fit_score(
     if _has_any(job_corpus, ["5+ years", "5 years", "five years"]) and not _has_any(candidate_corpus, ["5+ years", "5 years", "five years"]):
         score -= 8
         reasons.append("Role asks for 5+ years; profile currently states 4+ years, so review seniority fit manually.")
-    elif role_track in {"software_engineer", "data_scientist", "data_analyst", "data_engineer", "genai_engineer"} and _has_any(job_corpus, ["1+ years", "1 years", "one year"]):
-        score += 5
-        reasons.append("Profile exceeds the stated 1+ year experience threshold.")
+    elif role_track in {"software_engineer", "data_scientist", "data_analyst", "data_engineer", "genai_engineer"}:
+        if _has_any(job_corpus, ["4+ years", "4 years", "four years"]):
+            score += 5
+            reasons.append("Profile meets the stated 4+ year experience threshold.")
+        elif _has_any(job_corpus, ["3+ years", "3 years", "three years"]):
+            score += 6
+            reasons.append("Profile exceeds the stated 3+ year experience threshold.")
+        elif _has_any(job_corpus, ["2+ years", "2 years", "two years"]):
+            score += 6
+            reasons.append("Profile exceeds the stated 2+ year experience threshold.")
+        elif _has_any(job_corpus, ["1+ years", "1 years", "one year"]):
+            score += 5
+            reasons.append("Profile exceeds the stated 1+ year experience threshold.")
 
     if missing:
         reasons.append(f"Potential gaps to address: {', '.join(list(missing)[:6])}.")
+
+    if role_track == "data_scientist" and _has_any(job_corpus, ["causal inference", "quasi-experimental", "quasi experimental"]) and not _has_any(
+        candidate_corpus,
+        ["causal inference", "quasi-experimental", "quasi experimental", "a/b testing", "ab testing"],
+    ):
+        score = min(score, 72)
 
     return max(0, min(100, score)), reasons[:8]
 

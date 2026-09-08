@@ -138,6 +138,40 @@ def test_data_scientist_fit_score_reflects_strong_profile_overlap() -> None:
     assert "proj_5" not in plan["suggested_project_ids"]
 
 
+def test_product_data_scientist_role_gets_credit_for_transferable_analytics() -> None:
+    server_dir = Path(__file__).resolve().parents[1]
+    candidate = yaml.safe_load((server_dir / "data/candidate_profile.yaml").read_text())
+    job_fields = {
+        "title": "Data Scientist",
+        "company": "Twitch",
+        "location": "San Francisco, CA",
+        "job_text": (
+            "Join the Monetization team. Partner with product, engineering, finance, and data teams "
+            "to measure new features, design and analyze experiments, and apply causal inference methods. "
+            "Develop models and analyses that inform pricing, segmentation, and revenue optimization. "
+            "Build dashboards, reporting, and analytical tooling."
+        ),
+        "requirements": [
+            "3+ years of experience as a data scientist, applied scientist, economist, or related field.",
+            "Proficiency in SQL.",
+            "Proficiency with Python or R.",
+            "Strong foundation in experimentation and causal inference.",
+            "Strong communication skills across technical and non-technical stakeholders.",
+            "Comfort building dashboards and recurring reporting.",
+        ],
+        "responsibilities": [],
+        "skills": [],
+    }
+
+    plan = build_tailoring_plan(LLMClient(api_key=""), job_fields, candidate, {})
+
+    assert plan["role_track"] == "data_scientist"
+    assert 60 <= plan["fit_score"] <= 72
+    assert "Role asks for 5+ years" not in " ".join(plan["fit_reasons"])
+    assert "Profile exceeds the stated 3+ year experience threshold." in plan["fit_reasons"]
+    assert "Causal Inference" in plan["missing_keywords"]
+
+
 def test_pasted_data_scientist_text_scores_higher_than_hardware_role() -> None:
     server_dir = Path(__file__).resolve().parents[1]
     candidate = yaml.safe_load((server_dir / "data/candidate_profile.yaml").read_text())
