@@ -188,6 +188,7 @@ ACTION_VERBS = {
 def _clean_resume_line(value: Any) -> str:
     text = str(value or "").strip()
     text = re.sub(r"^[•\\-]\\s*", "", text)
+    text = re.sub(r"^(?:[-*•]\s*)+", "", text)
     text = re.sub(r"\s+", " ", text)
     return text.strip()
 
@@ -308,7 +309,7 @@ def _merge_lti_entries(
         revised = []
         for bullet in entry.get("bullets", []):
             bid = bullet.get("id")
-            revised.append({**bullet, "text": rewritten_bullets.get(bid, bullet.get("text", ""))})
+            revised.append({**bullet, "text": _clean_resume_line(rewritten_bullets.get(bid, bullet.get("text", "")))})
         return {
             **entry,
             "start_date_fmt": _to_mmm_yyyy(str(entry.get("start_date", ""))),
@@ -334,7 +335,7 @@ def _merge_lti_entries(
             merged_bullets.append(
                 {
                     **bullet,
-                    "text": rewritten_bullets.get(bid, bullet.get("text", "")),
+                    "text": _clean_resume_line(rewritten_bullets.get(bid, bullet.get("text", ""))),
                     "_selected": bid in selected_set,
                 }
             )

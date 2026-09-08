@@ -52,7 +52,7 @@ METRIC = re.compile(r"(?<!\w)(?:~)?\d+(?:\.\d+)?(?:%|\+)(?:\s+(?:integration wor
 
 def bullet_segments(raw: str) -> tuple[Segment, ...]:
     # Accept paired legacy Markdown, then validate emphasis against the clean text.
-    clean = raw.replace("**", "")
+    clean = re.sub(r"^(?:[-*•]\s*)+", "", raw.strip()).replace("**", "")
     candidates: list[tuple[int, int]] = []
     for match in re.finditer(r"\*\*(.+?)\*\*", raw):
         phrase = match.group(1)
@@ -122,11 +122,11 @@ def parse_resume(text: str) -> ResumeDocument:
         elif line.upper() in HEADINGS:
             section = line.upper()
             blocks.append(Block("heading", (Segment(section, True),)))
-        elif raw.startswith(("- ", "• ")):
-            content = raw[2:]
+        elif raw.startswith(("- ", "* ", "• ")):
+            content = re.sub(r"^(?:[-*•]\s*)+", "", raw.strip())
             segments = bullet_segments(content)
             if section.startswith("CERTIFICATIONS"):
-                label, sep, rest = line[2:].partition(" | ")
+                label, sep, rest = content.partition(" | ")
                 segments = (Segment(label, True), Segment(sep + rest))
             blocks.append(Block("bullet", segments))
         elif section == "TECHNICAL SKILLS":
