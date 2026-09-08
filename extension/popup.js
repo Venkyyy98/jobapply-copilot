@@ -174,6 +174,28 @@ function appendListItem(listNode, value) {
   listNode.appendChild(li);
 }
 
+function hasFiveYearRequirement(jobText) {
+  return /(^|[^\d.])5\s*\+?\s*years?\b|\bfive\s+years?\b/i.test(String(jobText || ""));
+}
+
+function sanitizeFitReasonsForDisplay(reasons) {
+  const items = Array.isArray(reasons) ? reasons : [];
+  const jobText = [
+    el.jobTitle?.value || "",
+    el.companyHint?.value || "",
+    el.jobText?.value || "",
+  ].join("\n");
+  const hasFiveYears = hasFiveYearRequirement(jobText);
+  return items.filter((reason) => {
+    const text = String(reason || "").trim();
+    if (!text) return false;
+    if (!hasFiveYears && /(^|[^\d.])5\s*\+?\s*years?\b|\bfive\s+years?\b/i.test(text)) {
+      return false;
+    }
+    return true;
+  });
+}
+
 function sanitizeFilePart(input) {
   return (input || "")
     .trim()
@@ -565,7 +587,7 @@ function renderAnalysis(data) {
   );
   setText(el.fitScore, `${data.fit_score}/100`);
   clearNode(el.fitReasons);
-  (data.fit_reasons || []).forEach((r) => {
+  sanitizeFitReasonsForDisplay(data.fit_reasons || []).forEach((r) => {
     appendListItem(el.fitReasons, r);
   });
 
