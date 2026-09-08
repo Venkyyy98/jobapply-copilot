@@ -293,6 +293,20 @@ def _has_any(corpus: str, terms: list[str]) -> bool:
     return any(term in corpus for term in terms)
 
 
+def _filter_inaccurate_fit_reasons(reasons: list[str], job_fields: dict[str, Any]) -> list[str]:
+    job_corpus = _job_corpus(job_fields)
+    filtered: list[str] = []
+    has_five_year_requirement = _has_any(job_corpus, ["5+ years", "5 years", "five years"])
+    for reason in reasons:
+        text = str(reason).strip()
+        if not text:
+            continue
+        if not has_five_year_requirement and re.search(r"\b5\+?\s*years?\b|\bfive years?\b", text.lower()):
+            continue
+        filtered.append(text)
+    return filtered
+
+
 def detect_sector(job_fields: dict[str, Any]) -> str:
     corpus = _job_corpus(job_fields)
     title = str(job_fields.get("title", "")).lower()
@@ -681,7 +695,7 @@ def build_tailoring_plan(
             llm_fit_score = int(generated.get("fit_score", fit_score))
             fit_score = max(fit_score, min(100, round((fit_score * 0.75) + (llm_fit_score * 0.25))))
             llm_reasons = [str(item) for item in generated.get("fit_reasons", []) if str(item).strip()]
-            reasons = (reasons + llm_reasons)[:8]
+            reasons = _filter_inaccurate_fit_reasons(reasons + llm_reasons, job_fields)[:8]
             plan = list(generated.get("tailoring_plan", plan))
             llm_bullets = [bid for bid in generated.get("suggested_bullet_ids", suggested_bullets) if bid in bullet_ids]
             ranked = rank_bullet_ids(candidate_profile, job_fields, ats_keywords, role_track, sector_track)
@@ -693,7 +707,7 @@ def build_tailoring_plan(
             answers.update({k: str(v) for k, v in generated.get("common_answers", {}).items()})
             ats_keywords = sanitize_ats_keywords(list(generated.get("ats_keywords", [])) + ats_keywords, job_fields)
             fit_score, deterministic_reasons = _deterministic_fit_score(job_fields, candidate_profile, role_track, ats_keywords)
-            reasons = (deterministic_reasons + llm_reasons)[:8]
+            reasons = _filter_inaccurate_fit_reasons(deterministic_reasons + llm_reasons, job_fields)[:8]
         except Exception:
             pass
 

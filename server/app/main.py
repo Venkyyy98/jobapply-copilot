@@ -902,7 +902,8 @@ def generate_docs(
 
     diff_summary = build_diff_summary(all_bullet_ids, selected_bullet_ids)
     coverage = keyword_coverage_for_text(list(tailoring.get("ats_keywords", [])), resume_text)
-    tailored_fit_score = _generated_resume_fit_score(job_fields, resume_text, list(tailoring.get("ats_keywords", [])))
+    generated_fit_score = _generated_resume_fit_score(job_fields, resume_text, list(tailoring.get("ats_keywords", [])))
+    tailored_fit_score = max(int(job.get("fit_score") or 0), generated_fit_score)
 
     return GenerateDocsResponse(
         job_id=payload.job_id,

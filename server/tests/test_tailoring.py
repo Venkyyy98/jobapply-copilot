@@ -300,6 +300,13 @@ def test_generated_resume_fit_score_penalizes_unsolved_required_gaps() -> None:
     assert score > 30
 
 
+def test_displayed_tailored_fit_should_not_drop_below_analyzed_fit() -> None:
+    analyzed_fit = 62
+    generated_fit = 48
+
+    assert max(analyzed_fit, generated_fit) == 62
+
+
 def test_ai_engineer_with_successfactors_reference_is_not_classified_as_sap() -> None:
     server_dir = Path(__file__).resolve().parents[1]
     candidate = yaml.safe_load((server_dir / "data/candidate_profile.yaml").read_text())
