@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE = "http://127.0.0.1:8787";
+const DEFAULT_API_BASE = "https://jobapply-copilot-api.onrender.com";
 
 async function configureSidePanelBehavior() {
   if (chrome.sidePanel?.setPanelBehavior) {

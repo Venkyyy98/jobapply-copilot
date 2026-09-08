@@ -71,7 +71,7 @@ const el = {
 function setStatus(msg, isError = false) {
   let text = msg || "";
   if (isError && /failed to fetch/i.test(String(text))) {
-    text = "Cannot reach local server (127.0.0.1:8787). Run ./scripts/setup_and_run_server.sh";
+    text = "Cannot reach the JobApply Copilot API. Check the extension Options page and your production connection.";
   }
   if (!el.status) return;
   el.status.textContent = text;
@@ -136,9 +136,9 @@ async function testInlineApiKeyState() {
 
 async function openApplicationTracker() {
   const stored = await chrome.storage.local.get({
-    websiteUrl: "http://localhost:3000/app/jobs",
+    websiteUrl: "https://jobapply-copilot-web.onrender.com/app/jobs",
   });
-  const rawUrl = String(stored.websiteUrl || "http://localhost:3000/app/jobs").trim();
+  const rawUrl = String(stored.websiteUrl || "https://jobapply-copilot-web.onrender.com/app/jobs").trim();
   try {
     const url = new URL(rawUrl);
     if (!["http:", "https:"].includes(url.protocol)) {

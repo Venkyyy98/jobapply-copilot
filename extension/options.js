@@ -149,8 +149,8 @@ function serializeKeyValueLines(items) {
 
 async function loadSettings() {
   const stored = await chrome.storage.local.get({
-    apiBaseUrl: "http://127.0.0.1:8787",
-    websiteUrl: "http://localhost:3000/app/jobs",
+    apiBaseUrl: "https://jobapply-copilot-api.onrender.com",
+    websiteUrl: "https://jobapply-copilot-web.onrender.com/app/jobs",
     extensionToken: "",
     jacToken: "",
     openaiApiKey: "",
@@ -264,8 +264,8 @@ async function saveSettings() {
   const openaiApiKey = getValue("openaiApiKey");
   const rememberOpenAiKey = Boolean(document.getElementById("rememberOpenAiKey").checked);
   const localPayload = {
-    apiBaseUrl: getValue("apiBaseUrl") || "http://127.0.0.1:8787",
-    websiteUrl: getValue("websiteUrl") || "http://localhost:3000/app/jobs",
+    apiBaseUrl: getValue("apiBaseUrl") || "https://jobapply-copilot-api.onrender.com",
+    websiteUrl: getValue("websiteUrl") || "https://jobapply-copilot-web.onrender.com/app/jobs",
     extensionToken: getValue("extensionToken"),
     jacToken: getValue("jacToken"),
     profile,
@@ -299,7 +299,7 @@ document.getElementById("testOpenAiKeyBtn").addEventListener("click", async () =
     document.getElementById("status").textContent = "Paste an API key before testing.";
     return;
   }
-  const apiBase = (getValue("apiBaseUrl") || "http://127.0.0.1:8787").replace(/\/+$/, "");
+  const apiBase = (getValue("apiBaseUrl") || "https://jobapply-copilot-api.onrender.com").replace(/\/+$/, "");
   try {
     const res = await fetch(`${apiBase}/ai/test_key`, {
       method: "POST",
