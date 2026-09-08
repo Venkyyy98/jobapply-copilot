@@ -47,7 +47,14 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ candidate_profile: candidateProfile, preferences })
     });
     if (!response.ok) {
-      return new NextResponse(await response.text(), { status: response.status });
+      const detail = await response.text();
+      const isRenderError = response.status === 502 || detail.trim().startsWith("<!DOCTYPE html>");
+      return invalidProfileRedirect(
+        request,
+        isRenderError
+          ? "The profile service is waking up or temporarily unavailable. Reload in about a minute and save again."
+          : detail || `Profile service returned ${response.status}. Please try again.`
+      );
     }
   } catch (error) {
     return invalidProfileRedirect(request, error instanceof Error ? error.message : "Invalid profile JSON.");
