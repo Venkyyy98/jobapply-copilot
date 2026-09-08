@@ -94,6 +94,8 @@ def _clean_title(value: str) -> str:
     ).strip()
     cleaned = re.sub(r"\s+in\s+[A-Z][A-Za-z .'-]+,\s*(?:\d{5}|[A-Z]{2})(?:\b.*)?$", "", cleaned).strip()
     cleaned = re.sub(r"\s+in\s+[A-Z][A-Za-z .'-]+,\s*[A-Z][A-Za-z .'-]+$", "", cleaned).strip()
+    cleaned = re.sub(r"\s*\([^)]*\b(?:tiktok|bp|requisition|job code)[^)]*\)", "", cleaned, flags=re.I).strip()
+    cleaned = re.sub(r"\s+-\s+\d{4}\s+start$", "", cleaned, flags=re.I).strip()
     cleaned = re.sub(r"\s+\(?\b(?:remote|hybrid|onsite|on-site)\b\)?$", "", cleaned, flags=re.I).strip()
     return cleaned[:120]
 
@@ -140,8 +142,9 @@ def _heuristic_location(lines: list[str]) -> str:
             next_line = _clean_location(lines[i + 1])
             if _looks_like_specific_location(next_line):
                 return next_line
-        if raw_low.startswith(("location:", "locations:")) and _looks_like_specific_location(cleaned):
-            return cleaned
+        if raw_low.startswith(("location:", "locations:")) and cleaned:
+            if low not in {"united states", "usa", "us", "remote", "hybrid", "on-site", "onsite"}:
+                return cleaned
         for pattern in location_patterns:
             match = re.search(pattern, cleaned)
             if match:

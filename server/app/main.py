@@ -848,6 +848,8 @@ def generate_docs(
 
     diff_summary = build_diff_summary(all_bullet_ids, selected_bullet_ids)
     coverage = keyword_coverage_for_text(list(tailoring.get("ats_keywords", [])), resume_text)
+    original_fit = int(job.get("fit_score") or 0)
+    tailored_fit_score = min(100, max(original_fit, round(original_fit + max(0, coverage.get("keyword_coverage_pct", 0) - int(job.get("keyword_coverage_pct") or 0)) * 0.35)))
 
     return GenerateDocsResponse(
         job_id=payload.job_id,
@@ -865,6 +867,7 @@ def generate_docs(
         diff_summary=diff_summary,
         suggested_project_ids=selected_project_ids,
         keyword_coverage_pct=int(coverage.get("keyword_coverage_pct", 0)),
+        tailored_fit_score=tailored_fit_score,
         matched_keywords=list(coverage.get("matched_keywords", [])),
         missing_keywords=list(coverage.get("missing_keywords", [])),
         ai_assisted=ai_assisted,

@@ -45,6 +45,7 @@ const el = {
   analysisLocation: document.getElementById("analysisLocation"),
   summary: document.getElementById("summary"),
   fitScore: document.getElementById("fitScore"),
+  tailoredFitScore: document.getElementById("tailoredFitScore"),
   fitReasons: document.getElementById("fitReasons"),
   bulletIds: document.getElementById("bulletIds"),
   keywordCoverage: document.getElementById("keywordCoverage"),
@@ -1361,6 +1362,7 @@ el.generateBtn.addEventListener("click", async () => {
       // Keep docs usable even if folder save fails.
     }
     setText(el.keywordCoverage, `${result.keyword_coverage_pct ?? 0}%`);
+    setText(el.tailoredFitScore, result.tailored_fit_score != null ? `${result.tailored_fit_score}/100` : "Unavailable");
     setText(el.matchedKeywords, (result.matched_keywords || []).join(", ") || "None");
     setText(el.missingKeywords, (result.missing_keywords || []).join(", ") || "None");
     el.markAppliedBtn.disabled = false;

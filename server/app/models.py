@@ -80,6 +80,7 @@ class GenerateDocsResponse(BaseModel):
     diff_summary: list[str]
     suggested_project_ids: list[str] = Field(default_factory=list)
     keyword_coverage_pct: int = 0
+    tailored_fit_score: int | None = None
     matched_keywords: list[str] = Field(default_factory=list)
     missing_keywords: list[str] = Field(default_factory=list)
     ai_assisted: bool = False
