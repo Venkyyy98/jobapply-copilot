@@ -154,6 +154,7 @@ def _normalize_target_title(job_fields: dict[str, Any]) -> str:
 
     role_track = detect_role_track(job_fields)
     return {
+        "software_engineer": "Software Engineer",
         "genai_engineer": "AI Engineer",
         "data_scientist": "Data Scientist",
         "data_engineer": "Data Engineer",
@@ -233,6 +234,7 @@ def _normalize_project_bullets(raw_bullets: list[Any]) -> list[str]:
 def _rewrite_summary(candidate_profile: dict[str, Any], job_fields: dict[str, Any], ats_keywords: list[str]) -> str:
     role_track = detect_role_track(job_fields)
     opening = {
+        "software_engineer": "Software Engineer",
         "genai_engineer": "AI/ML Engineer",
         "data_scientist": "Data Scientist",
         "data_engineer": "Data Engineer",
@@ -242,6 +244,7 @@ def _rewrite_summary(candidate_profile: dict[str, Any], job_fields: dict[str, An
         "sap_consultant": "SAP Integration Consultant",
     }.get(role_track, _normalize_target_title(job_fields))
     domain_phrase = {
+        "software_engineer": "backend services, cloud automation, production data workflows, API integrations, and ML infrastructure support",
         "genai_engineer": "production LLM applications, RAG pipelines, evaluation frameworks, agentic workflows, and secure AI services",
         "data_scientist": "predictive models, statistical analysis, NLP, forecasting, experimentation, and cloud analytics",
         "data_engineer": "scalable ETL pipelines, cloud data platforms, enterprise integrations, data quality, and analytics infrastructure",
@@ -253,6 +256,7 @@ def _rewrite_summary(candidate_profile: dict[str, Any], job_fields: dict[str, An
     # Keep job-posting keywords in Technical Skills, but make the summary read
     # like a professional statement rather than an ATS keyword dump.
     stack_by_role = {
+        "software_engineer": ["Python", "Java", "REST APIs", "FastAPI", "AWS", "CloudFormation"],
         "genai_engineer": ["Python", "PyTorch", "LLMs", "RAG", "FastAPI", "AWS"],
         "data_scientist": ["Python", "SQL", "PyTorch", "PySpark", "NLP", "AWS"],
         "data_engineer": ["Python", "SQL", "Java", "MySQL", "Spark", "AWS"],
@@ -267,9 +271,10 @@ def _rewrite_summary(candidate_profile: dict[str, Any], job_fields: dict[str, An
     gpa = str(graduate.get("gpa", "")).strip()
     academic_edge = f"M.S. in Data Science from Stevens Institute of Technology{f' (GPA {gpa})' if gpa else ''}"
     credential_phrase = " and an AWS Certified AI Practitioner certification" if role_track in {"genai_engineer", "data_scientist"} else ""
+    company_scope = "Easley Dunn Productions, Accenture, and LTIMindtree" if role_track == "software_engineer" else "Accenture and LTIMindtree"
     return (
-        f"{opening} with 4+ years of experience building {domain_phrase} across Accenture and LTIMindtree. "
-        f"Combines enterprise delivery with an {academic_edge}, applied AI/ML research{credential_phrase}. "
+        f"{opening} with 4+ years of experience building {domain_phrase} across {company_scope}. "
+        f"Combines enterprise delivery, an {academic_edge}, and applied AI/ML research{credential_phrase}. "
         f"Hands-on expertise in {stack_text}, with quantified results in data quality, pipeline performance, and production analytics."
     )
 
@@ -403,6 +408,7 @@ def _tailored_technical_skills(
 ) -> list[dict[str, Any]]:
     role_track = detect_role_track(job_fields)
     category_priority = {
+        "software_engineer": ["Programming Languages", "Data Engineering and Cloud Platforms", "Generative AI and LLMs", "Machine Learning", "Visualization and BI"],
         "genai_engineer": ["Generative AI and LLMs", "Machine Learning", "Programming Languages", "Data Engineering and Cloud Platforms", "Visualization and BI"],
         "data_engineer": ["Data Engineering and Cloud Platforms", "Programming Languages", "Visualization and BI", "Machine Learning", "Generative AI and LLMs"],
         "data_scientist": ["Machine Learning", "Programming Languages", "Generative AI and LLMs", "Data Engineering and Cloud Platforms", "Visualization and BI"],
@@ -435,6 +441,49 @@ def _tailored_technical_skills(
         ordered_items = sorted(enumerate(items), key=lambda pair: (-item_score(pair[1]), pair[0]))
         category = str(group.get("category", ""))
         source_items[category] = [item for _, item in ordered_items]
+
+    if role_track == "software_engineer":
+        flattened = {item.lower(): item for values in source_items.values() for item in values}
+
+        def take(*names: str) -> list[str]:
+            chosen: list[str] = []
+            for name in names:
+                value = flattened.get(name.lower(), name)
+                if value and value not in chosen:
+                    chosen.append(value)
+            return chosen
+
+        return [
+            {"category": "Languages & Backend", "items": take("Python", "Java", "SQL", "Node.js", "TypeScript", "REST APIs", "FastAPI")[:7]},
+            {
+                "category": "Cloud & Infrastructure",
+                "items": take(
+                    "AWS",
+                    "AWS Lambda",
+                    "Amazon API Gateway",
+                    "Amazon DynamoDB",
+                    "Amazon Bedrock",
+                    "AWS CDK",
+                    "CloudFormation",
+                    "Docker",
+                    "CI/CD",
+                )[:9],
+            },
+            {"category": "Databases", "items": take("PostgreSQL", "MySQL", "DynamoDB", "Snowflake")[:4]},
+            {
+                "category": "AI/ML Systems",
+                "items": take(
+                    "Machine Learning",
+                    "Large Language Models (LLMs)",
+                    "Retrieval-Augmented Generation (RAG)",
+                    "LangChain",
+                    "FAISS",
+                    "PyTorch",
+                    "Scikit-learn",
+                )[:7],
+            },
+            {"category": "Enterprise Integration", "items": take("SAP CPI", "SAP BTP", "SAP PI/PO", "SAP S/4HANA", "OAuth 2.0", "SAML")[:6]},
+        ]
 
     if role_track in {"genai_engineer", "data_scientist", "data_engineer"}:
         flattened = {item.lower(): item for values in source_items.values() for item in values}

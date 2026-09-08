@@ -33,6 +33,21 @@ def _base_answers(candidate_profile: dict[str, Any], preferences: dict[str, Any]
 
 
 ROLE_KEYWORDS: dict[str, list[str]] = {
+    "software_engineer": [
+        "software engineer",
+        "software developer",
+        "backend",
+        "infrastructure",
+        "distributed systems",
+        "kubernetes",
+        "containerization",
+        "monitoring",
+        "logging",
+        "deployment",
+        "python",
+        "go",
+        "api",
+    ],
     "data_analyst": ["dashboard", "reporting", "bi", "power bi", "tableau", "sql", "analytics", "kpi"],
     "data_engineer": ["etl", "pipeline", "airflow", "spark", "databricks", "warehouse", "ingestion", "orchestration"],
     "data_scientist": ["machine learning", "model", "forecast", "classification", "regression", "nlp", "llm", "feature engineering"],
@@ -297,7 +312,13 @@ def _deterministic_fit_score(
     if matched:
         reasons.append(f"Matched profile keywords: {', '.join(list(matched)[:8])}.")
 
-    if role_track == "data_scientist" and _has_any(
+    if role_track == "software_engineer" and _has_any(
+        candidate_corpus,
+        ["software engineer", "python", "java", "node.js", "fastapi", "next.js", "api", "aws", "lambda", "cloudformation", "ci/cd"],
+    ):
+        score += 15
+        reasons.append("Profile contains software engineering, backend, and cloud deployment evidence.")
+    elif role_track == "data_scientist" and _has_any(
         candidate_corpus,
         ["machine learning", "data science", "model", "forecast", "classification", "regression", "nlp", "tensorflow", "pytorch"],
     ):
@@ -331,7 +352,7 @@ def _deterministic_fit_score(
     if _has_any(job_corpus, ["5+ years", "5 years", "five years"]) and not _has_any(candidate_corpus, ["5+ years", "5 years", "five years"]):
         score -= 8
         reasons.append("Role asks for 5+ years; profile currently states 4+ years, so review seniority fit manually.")
-    elif role_track in {"data_scientist", "data_analyst", "data_engineer", "genai_engineer"} and _has_any(job_corpus, ["1+ years", "1 years", "one year"]):
+    elif role_track in {"software_engineer", "data_scientist", "data_analyst", "data_engineer", "genai_engineer"} and _has_any(job_corpus, ["1+ years", "1 years", "one year"]):
         score += 5
         reasons.append("Profile exceeds the stated 1+ year experience threshold.")
 
@@ -346,6 +367,8 @@ def detect_role_track(job_fields: dict[str, Any]) -> str:
     title = str(job_fields.get("title", "")).lower()
     if "sap" in title:
         return "sap_consultant"
+    if re.search(r"\b(software engineer|software developer|backend engineer|infrastructure engineer)\b", title):
+        return "software_engineer"
     if re.search(r"\b(soc|silicon|vlsi|eda|cmos|asic|fpga|micro-?architecture)\b", title):
         return "hardware_engineer"
     if "business analyst" in title:
@@ -509,6 +532,14 @@ def rank_project_ids(
                 score += 18.0
             if "sap" in blob and detect_sector(job_fields) != "sap" and not any(k in _job_corpus(job_fields) for k in ["enterprise", "integration", "workflow"]):
                 score -= 20.0
+        if role_track == "software_engineer":
+            if any(k in blob for k in ["fastapi", "next.js", "typescript", "lambda", "api gateway", "dynamodb", "aws cdk", "cloud-native", "backend"]):
+                score += 16.0
+            if pid in {"proj_5", "proj_7", "proj_9"}:
+                score += 18.0
+            if any(k in _job_corpus(job_fields) for k in ["ml inference", "model serving", "inference platform", "developer tooling"]):
+                if any(k in blob for k in ["bedrock", "agent", "llm", "developer tooling", "observability", "cloud-native"]):
+                    score += 12.0
         ranked.append((pid, score))
     ranked.sort(key=lambda x: x[1], reverse=True)
     return [pid for pid, _ in ranked[:3]]
@@ -550,6 +581,10 @@ def rank_bullet_ids(
                 score += 2.0
             if role_track == "genai_engineer" and any(
                 x in text for x in ["llm", "rag", "retrieval", "embedding", "vector", "agent", "prompt", "fastapi"]
+            ):
+                score += 4.0
+            if role_track == "software_engineer" and any(
+                x in text for x in ["software", "codebase", "api", "python", "deployment", "cloud", "aws", "lambda", "monitor", "automation"]
             ):
                 score += 4.0
             scored.append((bid, score))

@@ -187,6 +187,61 @@ def test_clean_role_for_filename_removes_location_noise() -> None:
     assert clean_role_for_filename("Data Scientist I in Chantilly, Virginia") == "Data Scientist I"
 
 
+def test_infrastructure_software_engineer_role_uses_software_track() -> None:
+    server_dir = Path(__file__).resolve().parents[1]
+    candidate = yaml.safe_load((server_dir / "data/candidate_profile.yaml").read_text())
+    job_fields = {
+        "title": "Software Engineer - Infrastructure",
+        "company": "Baseten",
+        "job_text": (
+            "Develop infrastructure components for our ML inference platform using Python and Go. "
+            "Implement Kubernetes deployments for model serving, build monitoring systems, "
+            "support infrastructure automation, and contribute to inference orchestration."
+        ),
+        "requirements": [
+            "Proficient coding abilities in one or more popular programming or scripting languages.",
+            "Working knowledge of Kubernetes and containerization.",
+            "Basic understanding of machine learning concepts and model serving.",
+            "Familiarity with distributed systems concepts.",
+        ],
+        "responsibilities": [
+            "Develop infrastructure components for ML inference.",
+            "Build and enhance monitoring systems.",
+            "Support infrastructure automation.",
+        ],
+    }
+
+    plan = build_tailoring_plan(LLMClient(api_key=""), job_fields, candidate, {})
+
+    assert plan["role_track"] == "software_engineer"
+    assert "proj_7" in plan["suggested_project_ids"] or "proj_9" in plan["suggested_project_ids"]
+
+
+def test_infrastructure_software_engineer_resume_summary_targets_software() -> None:
+    server_dir = Path(__file__).resolve().parents[1]
+    candidate = yaml.safe_load((server_dir / "data/candidate_profile.yaml").read_text())
+    job_fields = {
+        "title": "Software Engineer - Infrastructure",
+        "company": "Baseten",
+        "job_text": "Build ML inference infrastructure using Python, Kubernetes, monitoring, APIs, and cloud automation.",
+    }
+
+    text = render_resume_text(
+        server_dir / "data/templates",
+        candidate,
+        job_fields,
+        [],
+        ["exp_0_b1", "exp_0_b2", "exp_2_b2"],
+        {},
+        {},
+        ["Python", "AWS", "CloudFormation", "REST APIs"],
+    )
+
+    assert "SUMMARY\nSoftware Engineer with 4+ years of experience" in text
+    assert "Hands-on expertise in Python, Java, REST APIs, FastAPI, AWS, CloudFormation" in text
+    assert "Data Engineer with 4+ years" not in text
+
+
 def test_ai_engineer_with_successfactors_reference_is_not_classified_as_sap() -> None:
     server_dir = Path(__file__).resolve().parents[1]
     candidate = yaml.safe_load((server_dir / "data/candidate_profile.yaml").read_text())
