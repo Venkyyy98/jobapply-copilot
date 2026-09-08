@@ -3,7 +3,7 @@ services:
     name: jobapply-copilot-api
     env: docker
     rootDir: server
-    plan: starter
+    plan: free
     healthCheckPath: /health
     envVars:
       - key: OPENAI_API_KEY
