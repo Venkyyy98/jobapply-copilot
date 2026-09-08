@@ -581,18 +581,18 @@ class Storage:
                     row_payload[:-2] + (now, existing["id"]),
                 )
                 return int(existing["id"])
-            cur = conn.execute(
-                """
+            insert_sql = """
                 INSERT INTO job_feed_items (
                     source_job_id, source_url, canonical_key, title, company, location, work_mode, role_family,
                     page_title, summary, job_text_excerpt, fit_score, fit_reasons, tailoring_plan,
                     suggested_bullets, suggested_project_ids, matched_keywords, missing_keywords,
                     keyword_coverage_pct, compliance_ready, compliance_notes, visibility, created_at, updated_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                row_payload,
-            )
-            return int(cur.lastrowid)
+            """
+            if self.database_url:
+                insert_sql += " RETURNING id"
+            cur = conn.execute(insert_sql, row_payload)
+            return int(cur.fetchone()["id"] if self.database_url else cur.lastrowid)
 
     def get_feed_item(self, feed_item_id: int) -> dict[str, Any] | None:
         with self._conn() as conn:
