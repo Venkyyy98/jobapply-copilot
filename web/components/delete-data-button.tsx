@@ -9,7 +9,7 @@ export function DeleteDataButton() {
     const confirmed = window.confirm("Delete your beta profile, tokens, jobs, generated output records, and actions?");
     if (!confirmed) return;
     const response = await fetch("/api/me", { method: "DELETE" });
-    setStatus(response.ok ? "Your beta workspace data has been deleted." : "Could not delete data. Please try again.");
+    setStatus(response.ok ? "Your beta tracker data has been deleted." : "Could not delete data. Please try again.");
   }
 
   return (

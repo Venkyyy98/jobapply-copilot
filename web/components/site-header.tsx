@@ -13,7 +13,7 @@ export async function SiteHeader() {
           JobApply Copilot
         </Link>
         <p className="brand-subtitle">
-          Ethical application ops for data, analytics, and SAP roles.
+          Ethical application ops for modern job seekers.
         </p>
       </div>
       <nav className="nav-links">
@@ -22,7 +22,7 @@ export async function SiteHeader() {
         <Link href="/install-extension">Install</Link>
         <Link href="/compliance">Compliance</Link>
         <Link href="/privacy">Privacy</Link>
-        <Link href="/app">Workspace</Link>
+        <Link href="/app">Dashboard</Link>
         {session?.user?.email ? <Link href="/app/profile">Onboarding</Link> : null}
         {session?.user?.email ? <Link href="/data-controls">Data</Link> : null}
         {session?.user?.email ? (

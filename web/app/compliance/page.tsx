@@ -49,7 +49,7 @@ export default function CompliancePage() {
           <p className="muted">Generated documents are drafts. Users review and download before submitting anywhere.</p>
         </div>
         <div className="panel mini-trust-card">
-          <h3>Private workspace</h3>
+          <h3>Private tracker</h3>
           <p className="muted">Jobs, documents, and application actions are scoped to the signed-in account.</p>
         </div>
       </section>

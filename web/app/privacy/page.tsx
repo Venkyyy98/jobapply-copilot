@@ -11,12 +11,12 @@ export default function PrivacyPage() {
         <h2>What we collect</h2>
         <p>
           JobApply Copilot stores the account identity you use to sign in, profile facts you provide, job descriptions
-          you choose to analyze, generated document records, and workspace actions such as saved or applied.
+          you choose to analyze, generated document records, and tracker actions such as saved or applied.
         </p>
         <h2>How it is used</h2>
         <p>
           Your data is used to analyze job postings, tailor documents from your factual profile, power your private
-          workspace, enforce beta quotas, and improve reliability. The product does not auto-submit applications.
+          tracker, enforce beta quotas, and improve reliability. The product does not auto-submit applications.
         </p>
         <h2>AI processing</h2>
         <p>
@@ -35,11 +35,11 @@ export default function PrivacyPage() {
         <p>
           Generated PDFs, DOCX files, and text previews are temporary beta artifacts. The server is configured to delete
           generated output folders after the retention window, and you can delete individual tracked applications or your
-          entire beta workspace from data controls.
+          entire beta tracker from data controls.
         </p>
         <h2>Your controls</h2>
         <p>
-          You can export or delete beta workspace data from the data controls page. Extension tokens can be replaced by
+          You can export or delete beta tracker data from the data controls page. Extension tokens can be replaced by
           creating a new token from onboarding.
         </p>
         <h2>Outreach limitations</h2>

@@ -10,6 +10,24 @@ import {
 } from "@/components/application-activity";
 import { authOptions } from "@/lib/auth";
 import { fetchMyJobs } from "@/lib/api";
+import type { UserJobListResponse } from "@/lib/types";
+
+function emptyJobs(): UserJobListResponse {
+  return {
+    items: [],
+    total: 0,
+    activity: {
+      periods: {
+        today: { checked: 0, applied: 0 },
+        week: { checked: 0, applied: 0 },
+        month: { checked: 0, applied: 0 },
+        all: { checked: 0, applied: 0 }
+      },
+      filtered: { checked: 0, applied: 0 },
+      daily: []
+    }
+  };
+}
 
 export default async function WorkspaceJobsPage({
   searchParams
@@ -21,11 +39,15 @@ export default async function WorkspaceJobsPage({
     redirect("/signin");
   }
   const params = await searchParams;
+  let serviceUnavailable = false;
   const jobs = await fetchMyJobs({
     q: params.q || "",
     status: params.status || "",
     date_from: params.date_from || "",
     date_to: params.date_to || ""
+  }).catch(() => {
+    serviceUnavailable = true;
+    return emptyJobs();
   });
   const hasDateFilter = Boolean(params.date_from || params.date_to);
   const selectedJob = jobs.items.find((job) => String(job.id) === String(params.job || ""));
@@ -48,6 +70,11 @@ export default async function WorkspaceJobsPage({
           </p>
         </div>
       </div>
+      {serviceUnavailable ? (
+        <div className="auth-warning">
+          The application tracker service is waking up or temporarily unavailable. Reload in about a minute; this does not mean your saved jobs were deleted.
+        </div>
+      ) : null}
       <ApplicationActivitySummary activity={jobs.activity} filtered={hasDateFilter} />
       <ApplicationActivityCharts activity={jobs.activity} />
       <form className="filters-panel" action="/app/jobs">

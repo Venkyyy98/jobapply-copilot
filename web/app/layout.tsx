@@ -7,7 +7,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "JobApply Copilot",
-  description: "Public jobs feed and private application workspace for ethical job search operations."
+  description: "Public jobs feed and private application tracker for ethical job search operations."
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {

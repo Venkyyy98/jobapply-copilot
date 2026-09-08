@@ -117,15 +117,15 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             ))}
           </div>
           <div className="section-head">
-            <h3>Workspace actions</h3>
+            <h3>Tracker actions</h3>
           </div>
           <p className="small-note">
-            These actions update your signed-in workspace. Final generation and browser autofill still happen through the extension.
+            These actions update your signed-in tracker. Final document generation still happens through the extension.
           </p>
           <JobActionBar jobId={job.id} />
           <div className="section-head">
             <Link href="/app" className="inline-link">
-              Open private workspace
+              Open private tracker
             </Link>
             {hasValidSourceUrl(job.source_url) ? (
               <a href={job.source_url} target="_blank" rel="noreferrer" className="inline-link">

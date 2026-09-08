@@ -119,7 +119,7 @@ export default async function HomePage() {
         ))}
         {!visibleJobs.length ? (
           <div className="panel empty-state">
-            {signedIn ? "No reviewed jobs yet. Analyze a posting from the extension to fill this area." : "No curated jobs yet. Your extension-analyzed jobs stay private by default."}
+            {signedIn ? "No reviewed jobs yet. Analyze a posting from the extension to fill this area." : "No curated jobs yet. Extension-analyzed jobs stay private by default."}
           </div>
         ) : null}
       </section>
