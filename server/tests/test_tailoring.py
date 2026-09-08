@@ -4,7 +4,7 @@ import pytest
 import yaml
 
 from app.resume_render import render_resume_text
-from app.main import clean_role_for_filename
+from app.main import _generated_resume_fit_score, clean_role_for_filename
 from app.cover_letter_render import render_cover_letter_text
 from app.exporters import DEFAULT_RESUME_LAYOUT, _resume_pdf_story
 from app.llm import LLMClient
@@ -240,6 +240,30 @@ def test_infrastructure_software_engineer_resume_summary_targets_software() -> N
     assert "SUMMARY\nSoftware Engineer with 4+ years of experience" in text
     assert "Hands-on expertise in Python, Java, REST APIs, FastAPI, AWS, CloudFormation" in text
     assert "Data Engineer with 4+ years" not in text
+
+
+def test_generated_resume_fit_score_penalizes_unsolved_required_gaps() -> None:
+    job_fields = {
+        "title": "Software Engineer - Infrastructure",
+        "requirements": [
+            "Develop infrastructure using Python and Go.",
+            "Working knowledge of Kubernetes and containerization.",
+            "Experience with monitoring and distributed systems.",
+        ],
+    }
+    resume_text = (
+        "SUMMARY\nSoftware Engineer with Python, Java, REST APIs, AWS, CloudFormation, "
+        "Machine Learning, and monitoring experience.\n"
+    )
+
+    score = _generated_resume_fit_score(
+        job_fields,
+        resume_text,
+        ["Python", "Go", "Kubernetes", "Monitoring", "Distributed Systems"],
+    )
+
+    assert score < 80
+    assert score > 30
 
 
 def test_ai_engineer_with_successfactors_reference_is_not_classified_as_sap() -> None:

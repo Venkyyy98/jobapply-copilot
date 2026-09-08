@@ -516,14 +516,8 @@ async function extractFromPage() {
     el.jobText.value = extracted;
   }
   el.jobTitle.value = cleanRoleForFilename(response.jobTitle || (response.pageTitle || "").split("|")[0]?.trim() || "");
-  if (response.company) {
-    el.companyHint.value = String(response.company || "").trim();
-  } else if (!String(el.companyHint.value || "").trim()) {
-    const inferredCompany = inferCompanyFromText(response.pageTitle || "");
-    if (inferredCompany) {
-      el.companyHint.value = inferredCompany;
-    }
-  }
+  const nextCompany = String(response.company || inferCompanyFromText(response.pageTitle || "") || "").trim();
+  el.companyHint.value = nextCompany;
   if (response.captchaDetected) {
     setStatus("CAPTCHA detected on page. Prefill assistance will be blocked.", true);
   } else {
@@ -577,6 +571,7 @@ function renderAnalysis(data) {
 
   setText(el.bulletIds, (data.suggested_bullets || []).join(", ") || "None");
   setText(el.keywordCoverage, `${data.keyword_coverage_pct ?? 0}%`);
+  setText(el.tailoredFitScore, "Shown after document generation");
   setText(el.matchedKeywords, (data.matched_keywords || []).join(", ") || "None");
   setText(el.missingKeywords, (data.missing_keywords || []).join(", ") || "None");
   if (el.issueCard) el.issueCard.classList.add("hidden");

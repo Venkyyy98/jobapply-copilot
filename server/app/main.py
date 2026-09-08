@@ -311,6 +311,48 @@ def semantic_document_filename(job: dict[str, Any], candidate: dict[str, Any], d
     return f"{role}_{company}_{name}_{label}{suffix}"
 
 
+def _text_has_any(text: str, terms: list[str]) -> bool:
+    return any(term in text for term in terms)
+
+
+def _generated_resume_fit_score(job_fields: dict[str, Any], resume_text: str, ats_keywords: list[str]) -> int:
+    """Score the generated resume text without treating unsupported gaps as solved."""
+    coverage = keyword_coverage_for_text(ats_keywords, resume_text)
+    job_corpus = " ".join(
+        [
+            str(job_fields.get("title", "")),
+            str(job_fields.get("summary", "")),
+            str(job_fields.get("job_text", "")),
+            str(job_fields.get("description", "")),
+            " ".join(str(x) for x in job_fields.get("requirements", []) or []),
+            " ".join(str(x) for x in job_fields.get("responsibilities", []) or []),
+            " ".join(str(x) for x in job_fields.get("skills", []) or []),
+        ]
+    ).lower()
+    resume_corpus = f" {resume_text.lower()} "
+    score = 25 + round(int(coverage.get("keyword_coverage_pct", 0)) * 0.55)
+    title_tokens = {
+        token
+        for token in re.findall(r"[a-z0-9+#./-]{4,}", str(job_fields.get("title", "")).lower())
+        if token not in {"engineer", "scientist", "analyst", "developer", "senior", "associate"}
+    }
+    if title_tokens and all(token in resume_corpus for token in title_tokens):
+        score += 8
+    if _text_has_any(resume_corpus, ["master of science", "m.s.", "bachelor", "b.e."]):
+        score += 5
+    if _text_has_any(job_corpus, ["5+ years", "5 years", "five years"]) and not _text_has_any(
+        resume_corpus, ["5+ years", "5 years", "five years"]
+    ):
+        score -= 8
+    if _text_has_any(job_corpus, ["kubernetes", "causal inference", "airflow"]) and not _text_has_any(
+        resume_corpus, ["kubernetes", "causal inference", "airflow"]
+    ):
+        score -= 5
+    if re.search(r"\bgo\b", job_corpus) and not re.search(r"\bgo\b", resume_corpus):
+        score -= 5
+    return max(0, min(100, score))
+
+
 def _fallback_referral_draft(
     candidate: dict[str, Any],
     job: dict[str, Any],
@@ -848,8 +890,7 @@ def generate_docs(
 
     diff_summary = build_diff_summary(all_bullet_ids, selected_bullet_ids)
     coverage = keyword_coverage_for_text(list(tailoring.get("ats_keywords", [])), resume_text)
-    original_fit = int(job.get("fit_score") or 0)
-    tailored_fit_score = min(100, max(original_fit, round(original_fit + max(0, coverage.get("keyword_coverage_pct", 0) - int(job.get("keyword_coverage_pct") or 0)) * 0.35)))
+    tailored_fit_score = _generated_resume_fit_score(job_fields, resume_text, list(tailoring.get("ats_keywords", [])))
 
     return GenerateDocsResponse(
         job_id=payload.job_id,
