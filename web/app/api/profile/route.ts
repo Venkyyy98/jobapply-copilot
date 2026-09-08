@@ -7,7 +7,7 @@ import { authOptions } from "@/lib/auth";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8787";
 
 function invalidProfileRedirect(request: NextRequest, message: string) {
-  const url = new URL("/app/profile", request.url);
+  const url = new URL("/app/profile", process.env.NEXTAUTH_URL || request.url);
   url.searchParams.set("error", message);
   return NextResponse.redirect(url, { status: 303 });
 }
@@ -53,5 +53,5 @@ export async function POST(request: NextRequest) {
     return invalidProfileRedirect(request, error instanceof Error ? error.message : "Invalid profile JSON.");
   }
 
-  return NextResponse.redirect(new URL("/app/profile?saved=1", request.url));
+  return NextResponse.redirect(new URL("/app/profile?saved=1", process.env.NEXTAUTH_URL || request.url));
 }
