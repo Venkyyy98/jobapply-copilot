@@ -34,6 +34,7 @@ class Settings:
     linkedin_discovery_enabled: bool
     allow_server_llm_fallback: bool
     db_path: Path
+    database_url: str
     output_dir: Path
     packet_dir: Path
     candidate_profile_path: Path
@@ -61,6 +62,7 @@ settings = Settings(
     linkedin_discovery_enabled=os.getenv("JAC_LINKEDIN_DISCOVERY_ENABLED", "false").strip().lower() == "true",
     allow_server_llm_fallback=os.getenv("JAC_ALLOW_SERVER_LLM_FALLBACK", "false").strip().lower() == "true",
     db_path=_resolve_path("JAC_DB_PATH", "jobapply.db"),
+    database_url=os.getenv("DATABASE_URL", "").strip(),
     output_dir=_resolve_path("JAC_OUTPUT_DIR", "outputs"),
     packet_dir=_resolve_path("JAC_PACKET_DIR", str(Path.home() / "Documents" / "JobApplyCopilot")),
     candidate_profile_path=_resolve_path("JAC_CANDIDATE_PROFILE", "server/data/candidate_profile.yaml"),

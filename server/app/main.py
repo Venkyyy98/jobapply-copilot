@@ -95,7 +95,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-storage = Storage(settings.db_path)
+storage = Storage(settings.db_path, database_url=settings.database_url)
 llm = LLMClient(settings.openai_api_key, key_source="server")
 settings.output_dir.mkdir(parents=True, exist_ok=True)
 _last_retention_cleanup = 0.0

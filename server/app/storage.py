@@ -11,6 +11,13 @@ from zoneinfo import ZoneInfo
 
 from .models import JobActionType, JobStatus
 
+try:
+    import psycopg
+    from psycopg.rows import dict_row
+except ImportError:  # pragma: no cover
+    psycopg = None
+    dict_row = None
+
 APPLICATION_TIMEZONE = ZoneInfo("America/New_York")
 
 
@@ -102,13 +109,44 @@ def _infer_location(title: str, page_title: str, company_hint: str, job_text: st
     return ""
 
 
+class _PostgresConnection:
+    def __init__(self, connection):
+        self.connection = connection
+
+    def __enter__(self):
+        self.connection.__enter__()
+        return self
+
+    def __exit__(self, *args):
+        return self.connection.__exit__(*args)
+
+    def execute(self, query: str, params=()):
+        query = query.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "BIGSERIAL PRIMARY KEY")
+        query = query.replace("INSERT OR IGNORE", "INSERT")
+        query = query.replace("datetime(a.created_at)", "a.created_at")
+        query = query.replace("datetime(?)", "%s")
+        query = query.replace("?", "%s")
+        if "INSERT INTO users" in query and "ON CONFLICT" not in query:
+            query = query.rstrip() + " ON CONFLICT (email) DO NOTHING"
+        if "PRAGMA table_info(jobs)" in query:
+            query = "SELECT column_name AS name FROM information_schema.columns WHERE table_name = 'jobs'"
+            params = ()
+        return self.connection.execute(query, params)
+
+
 class Storage:
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path, database_url: str = ""):
         self.db_path = db_path
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.database_url = database_url
+        if not self.database_url:
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_db()
 
-    def _conn(self) -> sqlite3.Connection:
+    def _conn(self):
+        if self.database_url:
+            if psycopg is None:
+                raise RuntimeError("psycopg is required when DATABASE_URL is configured")
+            return _PostgresConnection(psycopg.connect(self.database_url, row_factory=dict_row))
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
